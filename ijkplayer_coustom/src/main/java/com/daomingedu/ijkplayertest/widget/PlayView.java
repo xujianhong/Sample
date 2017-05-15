@@ -316,6 +316,7 @@ public class PlayView {
         }
     };
 
+
     private void addVideoListener(final IjkVideoView videoView) {
         videoView.setOnPreparedListener(new IMediaPlayer.OnPreparedListener() {
             @Override
