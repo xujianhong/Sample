@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+
+        <com.example.administrator.myapplication.Tab.MyViewPager
+            android:id="@+id/mp_main"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerVertical="true"
+                android:background="#000000"
+
+                android:orientation="horizontal">
+
+                <LinearLayout
+
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginRight="30dp"
+                    android:gravity="center">
+
+                    <RelativeLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+
+                        android:padding="5dp">
+
+                        <RadioButton
+                            android:id="@+id/rb_menu_main"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:button="@null"
+                            android:gravity="center"
+                            android:drawablePadding="5dp"
+                            android:drawableTop="@drawable/tab_menu_course_icon"
+                            android:text="课程"
+
+                            android:textSize="14sp"
+                            android:textColor="@drawable/tab_menu_text" />
+
+                    </RelativeLayout>
+                </LinearLayout>
+
+
+                <LinearLayout
+
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginLeft="30dp"
+                    android:gravity="center">
+
+                    <RelativeLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:padding="5dp">
+
+                        <RadioButton
+                            android:id="@+id/rb_menu_me"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:button="@null"
+                            android:gravity="center"
+                            android:drawablePadding="5dp"
+                            android:drawableTop="@drawable/tab_menu_me_icon"
+                            android:text="我的"
+                            android:textSize="14sp"
+                            android:textColor="@drawable/tab_menu_text" />
+
+                    </RelativeLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+
+    </LinearLayout>
+    <RelativeLayout
+        android:id="@+id/rl_menu"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="-75dp"
+        android:padding="5dp"
+        android:background="@drawable/circle_drawable">
+
+
+        <Button
+            android:id="@+id/btn_class"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:layout_centerHorizontal="true"
+            android:drawableTop="@mipmap/bottom_class"
+            android:drawablePadding="5dp"
+            android:textColor="#ffffff"
+            android:text="班级管理"
+            android:textSize="14sp"
+
+            />
+        <Button
+            android:id="@+id/btn_check"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:layout_below="@+id/btn_class"
+            android:drawableTop="@mipmap/bottom_check"
+            android:drawablePadding="5dp"
+            android:textColor="#ffffff"
+            android:text="检查作业"
+            android:textSize="14sp"
+            android:layout_alignParentRight="true"
+            />
+        <Button
+            android:id="@+id/btn_homework"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:layout_below="@+id/btn_class"
+            android:drawableTop="@mipmap/bottom_homework"
+            android:drawablePadding="5dp"
+            android:textColor="#ffffff"
+            android:text="布置作业"
+            android:textSize="14sp"
+
+            />
+    </RelativeLayout>
+    <ImageButton
+        android:id="@+id/ib_classmangement"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="15dp"
+        android:background="@null"
+        android:src="@mipmap/classmanagement" />
+</RelativeLayout>
