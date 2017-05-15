@@ -4,33 +4,24 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.media.ThumbnailUtils;
 import android.os.Handler;
 import android.os.Message;
-
-import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-
+import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-
 import com.daomingedu.ijkplayertest.DensityUtil;
-import com.daomingedu.ijkplayertest.MyDevice;
 import com.daomingedu.ijkplayertest.R;
 import com.daomingedu.ijkplayertest.StringUtils;
 import com.daomingedu.ijkplayertest.ViewUtil;
 import com.daomingedu.ijkplayertest.widget.media.IjkVideoView;
-import com.google.android.exoplayer.C;
-
 
 import tv.danmaku.ijk.media.player.IMediaPlayer;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
@@ -65,7 +56,7 @@ public class PlayView {
 
     RelativeLayout rl_controll;
     public RelativeLayout rl_videoview;
-    ImageView iv_view;
+
     LinearLayout ll_bottom;
     ImageButton pasue;
     TextView currenttime;
@@ -162,18 +153,32 @@ public class PlayView {
     public PlayView(Activity mActivity, View root) {
         this.mActivity = mActivity;
         this.mContext = mActivity;
-        videoView = (IjkVideoView) mActivity.findViewById(R.id.ijk);
-        iv_view = (ImageView) mActivity.findViewById(R.id.iv_view);
-        rl_videoview = (RelativeLayout) mActivity.findViewById(R.id.rl_videoview);
-        rl_controll = (RelativeLayout) mActivity.findViewById(R.id.rl_controll);
-        ll_bottom = (LinearLayout) mActivity.findViewById(R.id.ll_bottom);
-        pasue = (ImageButton) mActivity.findViewById(R.id.mediacontroller_play_pause);
-        currenttime = (TextView) mActivity.findViewById(R.id.mediacontroller_time_current);
-        seekbar = (SeekBar) mActivity.findViewById(R.id.mediacontroller_seekbar);
-        totaltime = (TextView) mActivity.findViewById(R.id.mediacontroller_time_total);
-        fill = (ImageButton) mActivity.findViewById(R.id.mediacontroller_fill);
-        pb_load = (ProgressBar) mActivity.findViewById(R.id.pb_load);
-        tv_error = (TextView) mActivity.findViewById(R.id.tv_error);
+        if (root == null) {
+
+            videoView = (IjkVideoView) mActivity.findViewById(R.id.ijk);
+            rl_videoview = (RelativeLayout) mActivity.findViewById(R.id.rl_videoview);
+            rl_controll = (RelativeLayout) mActivity.findViewById(R.id.rl_controll);
+            ll_bottom = (LinearLayout) mActivity.findViewById(R.id.ll_bottom);
+            pasue = (ImageButton) mActivity.findViewById(R.id.mediacontroller_play_pause);
+            currenttime = (TextView) mActivity.findViewById(R.id.mediacontroller_time_current);
+            seekbar = (SeekBar) mActivity.findViewById(R.id.mediacontroller_seekbar);
+            totaltime = (TextView) mActivity.findViewById(R.id.mediacontroller_time_total);
+            fill = (ImageButton) mActivity.findViewById(R.id.mediacontroller_fill);
+            pb_load = (ProgressBar) mActivity.findViewById(R.id.pb_load);
+            tv_error = (TextView) mActivity.findViewById(R.id.tv_error);
+        } else {
+            videoView = (IjkVideoView) root.findViewById(R.id.ijk);
+            rl_videoview = (RelativeLayout) root.findViewById(R.id.rl_videoview);
+            rl_controll = (RelativeLayout) root.findViewById(R.id.rl_controll);
+            ll_bottom = (LinearLayout) root.findViewById(R.id.ll_bottom);
+            pasue = (ImageButton) root.findViewById(R.id.mediacontroller_play_pause);
+            currenttime = (TextView) root.findViewById(R.id.mediacontroller_time_current);
+            seekbar = (SeekBar) root.findViewById(R.id.mediacontroller_seekbar);
+            totaltime = (TextView) root.findViewById(R.id.mediacontroller_time_total);
+            fill = (ImageButton) root.findViewById(R.id.mediacontroller_fill);
+            pb_load = (ProgressBar) root.findViewById(R.id.pb_load);
+            tv_error = (TextView) root.findViewById(R.id.tv_error);
+        }
 
         try {
             IjkMediaPlayer.loadLibrariesOnce(null);
@@ -233,18 +238,26 @@ public class PlayView {
      * @return
      */
     public PlayView setPath(String path, boolean isplay) {
+        pasue.setClickable(false);
+        rl_controll.setClickable(false);
         this.path = path;
+        if (TextUtils.isEmpty(path)) {
+            mHandler.sendEmptyMessage(HIDECONTEROL);
+            tv_error.setVisibility(View.VISIBLE);
+            mHandler.sendEmptyMessage(HIDEPB);
+            return this;
+        }
+        Log.e(TAG, "path:" + path);
         mHandler.sendEmptyMessage(SHOWPB);
         pasue.setClickable(false);
         rl_controll.setClickable(false);
-        Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Images.Thumbnails.MINI_KIND);
-        iv_view.setImageBitmap(ThumbnailUtils.extractThumbnail(bitmap, MyDevice.sWidth, DensityUtil.dip2px(mActivity, 200)));//得到视频第一帧图片
+
         videoView.setRender(IjkVideoView.RENDER_TEXTURE_VIEW);
         videoView.setVideoPath(path);
 
         if (isplay) {
             videoView.start();
-            iv_view.setVisibility(View.INVISIBLE);
+
             pasue.setImageResource(R.mipmap.play);
             mHandler.sendEmptyMessage(HIDEERROR);
         }
@@ -273,7 +286,7 @@ public class PlayView {
                 } else {
                     videoView.start();
                     pasue.setImageResource(R.mipmap.play);
-                    iv_view.setVisibility(View.INVISIBLE);
+
                 }
                 mHandler.sendEmptyMessage(HIDEERROR);
 
@@ -297,7 +310,6 @@ public class PlayView {
             } else {
                 videoView.start();
                 pasue.setImageResource(R.mipmap.play);
-                iv_view.setVisibility(View.INVISIBLE);
             }
         }
     };
@@ -315,7 +327,6 @@ public class PlayView {
 
         }
     };
-
 
     private void addVideoListener(final IjkVideoView videoView) {
         videoView.setOnPreparedListener(new IMediaPlayer.OnPreparedListener() {
@@ -377,7 +388,6 @@ public class PlayView {
             public void onCompletion(IMediaPlayer iMediaPlayer) {
                 Log.e(TAG, "视频播放完成");
 
-                iMediaPlayer.pause();
                 seekbar.setProgress(0);
                 iMediaPlayer.pause();
 
@@ -413,11 +423,18 @@ public class PlayView {
         int mCurrentOrientation = mActivity.getResources().getConfiguration().orientation;
         if (mCurrentOrientation == Configuration.ORIENTATION_PORTRAIT) {//竖屏的时候
             ViewUtil.full(false, mActivity);
-            rl_videoview.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, DensityUtil.dip2px(mActivity, 200)));
+            ViewGroup.LayoutParams params = rl_videoview.getLayoutParams();
+            params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            params.height = DensityUtil.dip2px(mActivity, 200);
+            rl_videoview.setLayoutParams(params);
             rl_controll.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);//底部虚拟按键
         } else if (mCurrentOrientation == Configuration.ORIENTATION_LANDSCAPE) {//横屏的时候
             ViewUtil.full(true, mActivity);
-            rl_videoview.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+            ViewGroup.LayoutParams layoutParams = rl_videoview.getLayoutParams();
+            layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            rl_videoview.setLayoutParams(layoutParams);
+
             rl_controll.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE);
         }
     }
@@ -443,7 +460,10 @@ public class PlayView {
                 videoView.setVideoPath(currentPath);
                 if (currentPosition != 0)
                     videoView.seekTo(currentPosition);
-                pasue.setImageResource(R.mipmap.play);
+                if(videoView.isPlaying())
+                    pasue.setImageResource(R.mipmap.play);
+                else
+                    pasue.setImageResource(R.mipmap.pasue);
             }
         }
     }
