@@ -253,6 +253,8 @@ public class PlayView {
         rl_controll.setClickable(false);
 
         videoView.setRender(IjkVideoView.RENDER_TEXTURE_VIEW);
+        videoView.toggleAspectRatio();
+
         videoView.setVideoPath(path);
 
         if (isplay) {

@@ -49,7 +49,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         findViewById(R.id.btn_path2).setOnClickListener(this);
 
-        path = "http://baobab.wdjcdn.com/14564977406580.mp4";
+//        path = "http://baobab.wdjcdn.com/14564977406580.mp4";
+        path ="/storage/emulated/0/Movies/video_20170516_115603.mp4";
         playView = new PlayView(this).setPath(path,false);
 
 
@@ -99,11 +100,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
 
         if(v.getId() == R.id.btn_path1){
-            path = "http://baobab.wdjcdn.com/14564977406580.mp4";
+            path = "/storage/emulated/0/Movies/video_20170516_115603.mp4";
 
         }else if(v.getId() == R.id.btn_path2){
-            path ="/storage/emulated/0/Movies/video_20170428_103904.mp4";
+            path ="/storage/emulated/0/Movies/video_20170418_102425.mp4";
         }
-        playView.setPath(path,true);
+        playView.setPath(path,false);
     }
 }
