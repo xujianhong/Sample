@@ -91,7 +91,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
     private IMediaController mMediaController;
     private IMediaPlayer.OnCompletionListener mOnCompletionListener;
     private IMediaPlayer.OnPreparedListener mOnPreparedListener;
-    private int mCurrentBufferPercentage;
+    private int mCurrentBufferPercentage;//当前缓存百分比
     private IMediaPlayer.OnErrorListener mOnErrorListener;
     private IMediaPlayer.OnInfoListener mOnInfoListener;
     private  IMediaPlayer.OnBufferingUpdateListener mOnBufferingUpdateListener;
