@@ -1,2 +1,2 @@
 # Sample
-Bottomnavigation ，bilbilvideo ，magnifier
+some trivial things
