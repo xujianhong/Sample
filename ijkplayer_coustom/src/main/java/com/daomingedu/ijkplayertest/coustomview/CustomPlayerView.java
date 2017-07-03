@@ -1,6 +1,7 @@
 package com.daomingedu.ijkplayertest.coustomview;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -9,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.Surface;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import java.io.IOException;
@@ -19,7 +21,7 @@ import java.util.Map;
  * Created by jianhongxu on 2017/7/3.
  */
 
-public class CustomPlayer extends FrameLayout implements CustomPlayerCall {
+public class CustomPlayerView extends FrameLayout {
 
     MediaPlayer mediaPlayer;
 
@@ -28,35 +30,54 @@ public class CustomPlayer extends FrameLayout implements CustomPlayerCall {
     private boolean looping; //是否循环播放
 
 
+    MyTextureView textureView;
+
+    FrameLayout mContent;
+
     public static final int STATE_IDLE = 0x01;//闲置状态
     public static final int STATE_INITIALIZED = 0x02;//初始化状态
 
     public static final int STATE_ERROR = 0x03;//错误状态
 
-    public static final int STATE_PREPARE =0x04;//准备状态
+    public static final int STATE_PREPARE = 0x04;//准备状态
     private Context mContext;
+
+
     private String mUrlData; //数据源
     private Map<String, String> mHeaders; //请求头
     private Surface surface;
 
-    public CustomPlayer(@NonNull Context context) {
-        super(context,null);
+    public CustomPlayerView(@NonNull Context context) {
+        this(context, null);
 
     }
 
-    public CustomPlayer(@NonNull Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs,0);
+    public CustomPlayerView(@NonNull Context context, @Nullable AttributeSet attrs) {
+        this(context, attrs, 0);
     }
 
-    public CustomPlayer(@NonNull Context context, @Nullable AttributeSet attrs, @AttrRes int defStyleAttr) {
+    public CustomPlayerView(@NonNull Context context, @Nullable AttributeSet attrs, @AttrRes int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
         mContext = context;
 
+        initView();
+
     }
 
-    @Override
-    public void init() {
+    private void initView() {
+        mContent = new FrameLayout(mContext);
+        mContent.setBackgroundColor(Color.BLACK);
+        FrameLayout.LayoutParams ps =
+                new LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                );
+        this.addView(mContent,ps);
+    }
+
+
+    public void initPlayer() {
         if (mCurrentState == STATE_IDLE && mediaPlayer == null) {
 
             mediaPlayer = new MediaPlayer();
@@ -94,12 +115,18 @@ public class CustomPlayer extends FrameLayout implements CustomPlayerCall {
 
     }
 
+    public void setUrlData(String urlData, Map<String, String> headers) {
+        mHeaders = headers;
+        mUrlData = urlData;
+
+    }
+
     private void initiailPlayer() {
-        if(mediaPlayer==null)return;
+        if (mediaPlayer == null) return;
         try {
             mediaPlayer.setDataSource(mContext, Uri.parse(mUrlData), mHeaders);
 
-            if(surface !=null) {
+            if (surface != null) {
                 mediaPlayer.setSurface(surface);
             }
             mediaPlayer.prepareAsync();
