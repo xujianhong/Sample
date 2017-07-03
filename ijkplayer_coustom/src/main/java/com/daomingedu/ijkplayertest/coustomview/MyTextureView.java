@@ -153,4 +153,6 @@ public class MyTextureView extends TextureView {
         this.rotation = rotation;
         updateTexture();
     }
+
+
 }
