@@ -141,6 +141,11 @@ public class CustomPlayerView extends FrameLayout implements TextureView.Surface
         public void onPrepared(MediaPlayer mp) {
             if(mCurrentState !=STATE_PREPARE)return;
 
+            mp.start();
+
+            mp.setVolume(1f,1f);//设置音量
+
+
         }
     };
 
