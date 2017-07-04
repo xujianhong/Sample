@@ -11,8 +11,7 @@
     <com.daomingedu.ijkplayertest.coustomview.CustomPlayerView
         android:id="@+id/cp_view"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
-        />
+        android:layout_height="200dp" />
 
 
     <Button
@@ -23,5 +22,6 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:onClick="onPath"
         android:text="path2"/>
 </LinearLayout>

@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.ViewGroup;
@@ -25,8 +26,10 @@ import java.util.Map;
  * Created by jianhongxu on 2017/7/3.
  */
 
-public class CustomPlayerView extends FrameLayout implements TextureView.SurfaceTextureListener {
+public class CustomPlayerView extends FrameLayout
+        implements TextureView.SurfaceTextureListener,CustomPlayer {
 
+    private static final String TAG = "CustomPlayerView";
     MediaPlayer mediaPlayer;
 
     int mCurrentState = STATE_IDLE;//当前状态
@@ -38,20 +41,18 @@ public class CustomPlayerView extends FrameLayout implements TextureView.Surface
 
     FrameLayout mContainer;
 
-    public static final int STATE_IDLE = 0x01;//闲置状态
-    public static final int STATE_INITIALIZED = 0x02;//初始化状态
 
-    public static final int STATE_ERROR = 0x03;//错误状态
-
-    public static final int STATE_PREPARE = 0x04;//准备状态
     private Context mContext;
 
 
     private String mUrlData; //数据源
     private Map<String, String> mHeaders; //请求头
-    private Surface surface;
+
     private int mScaleType = MyTextureView.CENTER_CROPED;
-    private SurfaceTexture mSufaceTexture;
+    private SurfaceTexture mSurfaceTexture;
+
+    private BaseController controller;
+    private int mBufferPercentage;
 
     public CustomPlayerView(@NonNull Context context) {
         this(context, null);
@@ -68,6 +69,22 @@ public class CustomPlayerView extends FrameLayout implements TextureView.Surface
         mContext = context;
 
         initView();
+
+        initController();
+
+    }
+
+    private void initController() {
+        if(controller ==null){
+            controller = new VideoController(mContext);
+
+        }
+        controller.setPlayer(this);
+        mContainer.removeView(controller);
+
+        LayoutParams ps =
+                new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        mContainer.addView(controller,ps);
 
     }
 
@@ -102,6 +119,8 @@ public class CustomPlayerView extends FrameLayout implements TextureView.Surface
         mediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
         mCurrentState = STATE_INITIALIZED;
 
+        if(controller !=null)
+            controller.setPlayerState(mCurrentState);
         initTextureView();
 
 //        perparePlayer(null);
@@ -145,14 +164,16 @@ public class CustomPlayerView extends FrameLayout implements TextureView.Surface
 
             mp.setVolume(1f,1f);//设置音量
 
-
+            mCurrentState = STATE_PREPARE_END;
+            if(controller!=null)
+                controller.setPlayerState(mCurrentState);
         }
     };
 
     private MediaPlayer.OnBufferingUpdateListener mOnBufferingUpdateListener = new MediaPlayer.OnBufferingUpdateListener() {
         @Override
         public void onBufferingUpdate(MediaPlayer MediaPlayer, int i) {
-
+            mBufferPercentage = i;
         }
     };
 
@@ -160,12 +181,13 @@ public class CustomPlayerView extends FrameLayout implements TextureView.Surface
         @Override
         public void onCompletion(MediaPlayer MediaPlayer) {
 
+            Log.d(TAG, "onCompletion: media play Completion" );
         }
     };
 
     private MediaPlayer.OnErrorListener mOnErrorListener = new MediaPlayer.OnErrorListener() {
         @Override
-        public boolean onError(MediaPlayer MediaPlayer, int i, int i1) {
+        public boolean onError(MediaPlayer MediaPlayer, int what, int extra) {
             return false;
         }
     };
@@ -180,17 +202,20 @@ public class CustomPlayerView extends FrameLayout implements TextureView.Surface
     private MediaPlayer.OnVideoSizeChangedListener mOnVideoSizeChangedListener = new MediaPlayer.OnVideoSizeChangedListener() {
         @Override
         public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
-
+            if(textureView!=null){
+                textureView.setVideoSize(width,height);
+            }
+            Log.d(TAG, "onVideoSizeChanged: width:"+width+"  height:"+height);
         }
     };
 
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        if(mSufaceTexture ==null){
-            mSufaceTexture = surface;
+        if(mSurfaceTexture ==null){
+            mSurfaceTexture = surface;
         }
-        perparePlayer(mSufaceTexture);
+        perparePlayer(mSurfaceTexture);
     }
 
     private void perparePlayer(SurfaceTexture surface) {
@@ -202,10 +227,13 @@ public class CustomPlayerView extends FrameLayout implements TextureView.Surface
             mediaPlayer.prepareAsync();
             mCurrentState =STATE_PREPARE;
 
+
         } catch (IOException e) {
             e.printStackTrace();
             mCurrentState =STATE_ERROR;
         }
+        if(controller !=null)
+            controller.setPlayerState(mCurrentState);
     }
 
     @Override
@@ -224,4 +252,38 @@ public class CustomPlayerView extends FrameLayout implements TextureView.Surface
     }
 
 
+    @Override
+    public int getCurrentState() {
+        return mCurrentState;
+    }
+
+    @Override
+    public boolean isIdle() {
+        return mCurrentState == STATE_IDLE;
+    }
+
+    @Override
+    public boolean isPreparing() {
+        return mCurrentState == STATE_PREPARE;
+    }
+
+    @Override
+    public boolean isPrePared() {
+        return mCurrentState ==STATE_PREPARE_END;
+    }
+
+    @Override
+    public long getDuration() {
+        return mediaPlayer.getDuration();
+    }
+
+    @Override
+    public long getCurrentPosition() {
+        return mediaPlayer.getCurrentPosition();
+    }
+
+    @Override
+    public int getBufferPercentage() {
+        return mBufferPercentage;
+    }
 }
