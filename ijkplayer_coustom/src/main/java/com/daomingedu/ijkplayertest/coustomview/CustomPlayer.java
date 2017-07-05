@@ -14,6 +14,11 @@ public interface CustomPlayer {
     int STATE_PREPARE = 0x04;//准备状态
     int STATE_PREPARE_END = 0x05;//准备结束结束状态
 
+    int STATE_COMPLETED = 0x06;//播放完成
+
+
+    void start();
+
     int getCurrentState();
 
     boolean isIdle();
@@ -22,6 +27,7 @@ public interface CustomPlayer {
 
     boolean isPrePared();
 
+    void seekto(int position);
 
 
     long getDuration();

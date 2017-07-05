@@ -45,8 +45,9 @@
 
         <ImageButton
             android:id="@+id/ib_play"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:scaleType="fitXY"
             android:src="@mipmap/icon_play"
             android:background="@android:color/transparent"
             />
@@ -73,8 +74,9 @@
             android:textColor="@android:color/white"/>
         <ImageButton
             android:id="@+id/ib_screen"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:scaleType="fitXY"
             android:src="@mipmap/icon_full_screen"
             android:background="@android:color/transparent"
             />

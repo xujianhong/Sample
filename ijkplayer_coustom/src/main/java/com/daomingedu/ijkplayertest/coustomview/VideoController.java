@@ -40,6 +40,9 @@ public class VideoController extends BaseController
 
     Timer mUpdateTimer;
     TimerTask mUpdateTimerTask;
+
+    private long lastPosition;
+
     public VideoController(@NonNull Context context) {
         super(context);
         init(context);
@@ -53,7 +56,7 @@ public class VideoController extends BaseController
     @Override
     public void setPlayerState(int currentState) {
 
-        switch (currentState){
+        switch (currentState) {
             case CustomPlayer.STATE_IDLE:
                 fl_main.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 ll_loading.setVisibility(INVISIBLE);
@@ -73,12 +76,12 @@ public class VideoController extends BaseController
         }
     }
 
-    private void cancelUpdate(){
-        if(mUpdateTimer!=null) {
+    private void cancelUpdate() {
+        if (mUpdateTimer != null) {
             mUpdateTimer.cancel();
-            mUpdateTimer =null;
+            mUpdateTimer = null;
         }
-        if(mUpdateTimerTask!=null){
+        if (mUpdateTimerTask != null) {
             mUpdateTimerTask.cancel();
             mUpdateTimerTask = null;
         }
@@ -86,10 +89,10 @@ public class VideoController extends BaseController
 
     private void startUpdate() {
         cancelUpdate();
-        if(mUpdateTimer == null){
+        if (mUpdateTimer == null) {
             mUpdateTimer = new Timer();
         }
-        if(mUpdateTimerTask == null){
+        if (mUpdateTimerTask == null) {
             mUpdateTimerTask = new TimerTask() {
                 @Override
                 public void run() {
@@ -104,7 +107,7 @@ public class VideoController extends BaseController
             };
         }
 
-        mUpdateTimer.schedule(mUpdateTimerTask,0,300);
+        mUpdateTimer.schedule(mUpdateTimerTask, 0, 300);
     }
 
     private void updateTime() {
@@ -112,31 +115,33 @@ public class VideoController extends BaseController
         long duration = player.getDuration();
         int bufferPercentage = player.getBufferPercentage(); //缓存百分比(0-100)
         seek.setSecondaryProgress(bufferPercentage);
-        int progress = (int) (100f*position/duration);
+        int progress = (int) (100f * position / duration);
         seek.setProgress(progress);
 
         tv_position_time.setText(PlayerUtils.formatTime(position));
         tv_end_time.setText(PlayerUtils.formatTime(duration));
 
-        Log.e(TAG, "updateTime: "+position);
+//        Log.e(TAG, "updateTime: "+position);
+
+        lastPosition = position;
 
     }
 
 
     private void init(Context context) {
         mContext = context;
-        View.inflate(context, R.layout.layout_controller,this);
+        View.inflate(context, R.layout.layout_controller, this);
 
-        ib_play = (ImageButton)findViewById(R.id.ib_play);
-        ib_screen = (ImageButton)findViewById(R.id.ib_screen);
+        ib_play = (ImageButton) findViewById(R.id.ib_play);
+        ib_screen = (ImageButton) findViewById(R.id.ib_screen);
 
-        tv_position_time = (TextView)findViewById(R.id.tv_position_time);
-        tv_end_time = (TextView)findViewById(R.id.tv_end_time);
+        tv_position_time = (TextView) findViewById(R.id.tv_position_time);
+        tv_end_time = (TextView) findViewById(R.id.tv_end_time);
 
-        ll_loading =(LinearLayout)findViewById(R.id.ll_loading);
-        seek = (AppCompatSeekBar)findViewById(R.id.seek);
+        ll_loading = (LinearLayout) findViewById(R.id.ll_loading);
+        seek = (AppCompatSeekBar) findViewById(R.id.seek);
 
-        fl_main = (FrameLayout)findViewById(R.id.fl_main);
+        fl_main = (FrameLayout) findViewById(R.id.fl_main);
 
 
         ib_play.setOnClickListener(this);
@@ -146,12 +151,24 @@ public class VideoController extends BaseController
 
     @Override
     public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.ib_play:
+                break;
+            case R.id.ib_screen:
+                break;
 
+        }
     }
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        if (fromUser) { //用户操作
 
+            int position = (int) (((double) progress / seekBar.getMax()) * player.getDuration());
+            Log.e(TAG, "onProgressChanged: " + position);
+            seekTo(position);
+
+        }
     }
 
     @Override
@@ -163,4 +180,15 @@ public class VideoController extends BaseController
     public void onStopTrackingTouch(SeekBar seekBar) {
 
     }
+
+
+    private void seekTo(int posittion) {
+
+
+        player.seekto(posittion);
+
+        lastPosition = posittion;
+    }
+
+
 }

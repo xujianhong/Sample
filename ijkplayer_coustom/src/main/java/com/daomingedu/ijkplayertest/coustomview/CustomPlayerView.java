@@ -181,6 +181,7 @@ public class CustomPlayerView extends FrameLayout
         @Override
         public void onCompletion(MediaPlayer MediaPlayer) {
 
+            mCurrentState = STATE_COMPLETED;
             Log.d(TAG, "onCompletion: media play Completion" );
         }
     };
@@ -194,7 +195,53 @@ public class CustomPlayerView extends FrameLayout
 
     private MediaPlayer.OnInfoListener mOnInfoListener = new MediaPlayer.OnInfoListener() {
         @Override
-        public boolean onInfo(MediaPlayer MediaPlayer, int i, int i1) {
+        public boolean onInfo(MediaPlayer mediaPlayer, int what, int i1) {
+            switch (what){
+                /**
+                 * 未指定的媒体播放器信息
+                 */
+                case MediaPlayer.MEDIA_INFO_UNKNOWN:
+                    Log.d(TAG, "onInfo: MEDIA_INFO_UNKNOWN");
+                    break;
+                /**
+                 * 视频对于解码器来说太复杂了：它不能足够快地解码帧。 在这个阶段可能只有音频播放正常。
+                 */
+                case MediaPlayer.MEDIA_INFO_VIDEO_TRACK_LAGGING:
+                    Log.d(TAG, "onInfo: MEDIA_INFO_VIDEO_TRACK_LAGGING");
+                    break;
+
+                /**
+                 * 播放器刚推出第一个视频帧进行渲染。
+                 */
+                case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
+                    Log.d(TAG, "onInfo: MEDIA_INFO_VIDEO_RENDERING_START");
+                    break;
+                case MediaPlayer.MEDIA_INFO_BUFFERING_START:
+                    Log.d(TAG, "onInfo: MEDIA_INFO_BUFFERING_START");
+                    break;
+                case MediaPlayer.MEDIA_INFO_BUFFERING_END:
+                    Log.d(TAG, "onInfo: MEDIA_INFO_BUFFERING_END");
+                    break;
+                case MediaPlayer.MEDIA_INFO_BAD_INTERLEAVING:
+                    Log.d(TAG, "onInfo: MEDIA_INFO_BAD_INTERLEAVING");
+                    break;
+                case MediaPlayer.MEDIA_INFO_NOT_SEEKABLE:
+                    Log.d(TAG, "onInfo: MEDIA_INFO_NOT_SEEKABLE");
+                    break;
+                case MediaPlayer.MEDIA_INFO_METADATA_UPDATE:
+                    Log.d(TAG, "onInfo: MEDIA_INFO_METADATA_UPDATE");
+                    break;
+                case MediaPlayer.MEDIA_INFO_UNSUPPORTED_SUBTITLE:
+                    Log.d(TAG, "onInfo: MEDIA_INFO_UNSUPPORTED_SUBTITLE");
+                    break;
+                case MediaPlayer.MEDIA_INFO_SUBTITLE_TIMED_OUT:
+                    Log.d(TAG, "onInfo: MEDIA_INFO_SUBTITLE_TIMED_OUT");
+                    break;
+
+
+
+            }
+
             return false;
         }
     };
@@ -253,6 +300,11 @@ public class CustomPlayerView extends FrameLayout
 
 
     @Override
+    public void start() {
+
+    }
+
+    @Override
     public int getCurrentState() {
         return mCurrentState;
     }
@@ -270,6 +322,13 @@ public class CustomPlayerView extends FrameLayout
     @Override
     public boolean isPrePared() {
         return mCurrentState ==STATE_PREPARE_END;
+    }
+
+    @Override
+    public void seekto(int position) {
+        if(mediaPlayer!=null){
+            mediaPlayer.seekTo(position);
+        }
     }
 
     @Override
