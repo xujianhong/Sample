@@ -32,5 +32,11 @@ public  class MainActivity extends AppCompatActivity {
         cp_view.setUrlData(urlData1,null);
         cp_view.initPlayer();
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        cp_view.release();
+    }
 }
 

@@ -58,18 +58,30 @@ public class VideoController extends BaseController
 
         switch (currentState) {
             case CustomPlayer.STATE_IDLE:
+                cancelUpdate();
                 fl_main.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 ll_loading.setVisibility(INVISIBLE);
+                tv_position_time.setText(PlayerUtils.formatTime(0));
+                tv_end_time.setText(PlayerUtils.formatTime(0));
+                seek.setProgress(0);
+                seek.setSecondaryProgress(0);
+                ib_play.setImageResource(R.mipmap.icon_play);
+                ib_screen.setImageResource(R.mipmap.icon_full_screen);
                 break;
             case CustomPlayer.STATE_INITIALIZED:
             case CustomPlayer.STATE_PREPARE:
                 fl_main.setBackgroundColor(getResources().getColor(R.color.colorPlayerBg));
                 ll_loading.setVisibility(VISIBLE);
                 break;
-            case CustomPlayer.STATE_PREPARE_END:
+            case CustomPlayer.STATE_PLAYING:
                 fl_main.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 ll_loading.setVisibility(INVISIBLE);
+                ib_play.setImageResource(R.mipmap.icon_pause);
                 startUpdate();
+                break;
+
+            case CustomPlayer.STATE_COMPLETED:
+                cancelUpdate();
                 break;
 
 
@@ -111,9 +123,17 @@ public class VideoController extends BaseController
     }
 
     private void updateTime() {
+        Log.d(TAG, "updateTime: "+player.getCurrentState());
         long position = player.getCurrentPosition();
         long duration = player.getDuration();
         int bufferPercentage = player.getBufferPercentage(); //缓存百分比(0-100)
+
+        if(position ==CustomPlayer.STATE_MEDIA_DATA_ERROR
+                ||duration==CustomPlayer.STATE_MEDIA_DATA_ERROR
+                ||bufferPercentage==CustomPlayer.STATE_MEDIA_DATA_ERROR){
+            cancelUpdate();
+            return;
+        }
         seek.setSecondaryProgress(bufferPercentage);
         int progress = (int) (100f * position / duration);
         seek.setProgress(progress);

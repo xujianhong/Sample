@@ -27,12 +27,21 @@ import java.util.Map;
  */
 
 public class CustomPlayerView extends FrameLayout
-        implements TextureView.SurfaceTextureListener,CustomPlayer {
+        implements TextureView.SurfaceTextureListener, CustomPlayer {
 
     private static final String TAG = "CustomPlayerView";
     MediaPlayer mediaPlayer;
 
     int mCurrentState = STATE_IDLE;//当前状态
+
+
+    public boolean isLooping() {
+        return looping;
+    }
+
+    public void setLooping(boolean looping) {
+        this.looping = looping;
+    }
 
     private boolean looping; //是否循环播放
 
@@ -75,7 +84,7 @@ public class CustomPlayerView extends FrameLayout
     }
 
     private void initController() {
-        if(controller ==null){
+        if (controller == null) {
             controller = new VideoController(mContext);
 
         }
@@ -84,7 +93,7 @@ public class CustomPlayerView extends FrameLayout
 
         LayoutParams ps =
                 new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        mContainer.addView(controller,ps);
+        mContainer.addView(controller, ps);
 
     }
 
@@ -96,21 +105,21 @@ public class CustomPlayerView extends FrameLayout
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                 );
-        this.addView(mContainer,ps);
+        this.addView(mContainer, ps);
     }
 
     public void initPlayer() {
         if (mCurrentState == STATE_IDLE && mediaPlayer == null) {
             mediaPlayer = new MediaPlayer();
         } else {
-            mediaPlayer.reset();
+
+            reset();
         }
 
         mediaPlayer.setLooping(looping);
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-//            mediaPlayer.setScreenOnWhilePlaying(true); ineffective
         //keep screen on
-        ((AppCompatActivity)mContext).getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        ((AppCompatActivity) mContext).getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         mediaPlayer.setOnPreparedListener(mOnPreparedListener);
         mediaPlayer.setOnBufferingUpdateListener(mOnBufferingUpdateListener);
         mediaPlayer.setOnCompletionListener(mOnCompletionListener);
@@ -119,7 +128,7 @@ public class CustomPlayerView extends FrameLayout
         mediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
         mCurrentState = STATE_INITIALIZED;
 
-        if(controller !=null)
+        if (controller != null)
             controller.setPlayerState(mCurrentState);
         initTextureView();
 
@@ -131,10 +140,11 @@ public class CustomPlayerView extends FrameLayout
      * 初始化textureView
      */
     private void initTextureView() {
-        if(textureView ==null){
+        if (textureView == null) {
             textureView = new MyTextureView(mContext);
+            textureView.setSurfaceTextureListener(this);
         }
-        textureView.setSurfaceTextureListener(this);
+
         textureView.setScaleType(mScaleType);
         mContainer.removeView(textureView);
         LayoutParams ps =
@@ -142,7 +152,7 @@ public class CustomPlayerView extends FrameLayout
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                 );
-        mContainer.addView(textureView,0,ps);
+        mContainer.addView(textureView, 0, ps);
 
     }
 
@@ -153,19 +163,18 @@ public class CustomPlayerView extends FrameLayout
     }
 
 
-
-
     private MediaPlayer.OnPreparedListener mOnPreparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(MediaPlayer mp) {
-            if(mCurrentState !=STATE_PREPARE)return;
+            if (mCurrentState != STATE_PREPARE) return;
 
             mp.start();
 
-            mp.setVolume(1f,1f);//设置音量
-
-            mCurrentState = STATE_PREPARE_END;
-            if(controller!=null)
+            mp.setVolume(1f, 1f);//设置音量
+            if (mp.isPlaying()) {
+                mCurrentState = STATE_PLAYING;
+            }
+            if (controller != null)
                 controller.setPlayerState(mCurrentState);
         }
     };
@@ -182,13 +191,49 @@ public class CustomPlayerView extends FrameLayout
         public void onCompletion(MediaPlayer MediaPlayer) {
 
             mCurrentState = STATE_COMPLETED;
-            Log.d(TAG, "onCompletion: media play Completion" );
+            Log.d(TAG, "onCompletion: media play Completion");
+            if (controller != null)
+                controller.setPlayerState(mCurrentState);
         }
     };
 
     private MediaPlayer.OnErrorListener mOnErrorListener = new MediaPlayer.OnErrorListener() {
         @Override
-        public boolean onError(MediaPlayer MediaPlayer, int what, int extra) {
+        public boolean onError(MediaPlayer mediaPlayer, int what, int extra) {
+            switch (what) {
+                /**
+                 * 未指定的媒体播放器错误。
+                 */
+                case MediaPlayer.MEDIA_ERROR_UNKNOWN:
+                    Log.e(TAG, "onError-what: MEDIA_ERROR_UNKNOWN");
+                    break;
+                /**
+                 * 媒体服务器死机。 在这种情况下，应用程序必须释放MediaPlayer对象并实例化一个新对象。
+                 */
+                case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
+                    Log.e(TAG, "onError-what: MEDIA_ERROR_SERVER_DIED");
+                    break;
+            }
+
+            switch (extra) {
+                /**文件或网络相关的操作错误。*/
+                case MediaPlayer.MEDIA_ERROR_IO:
+                    Log.e(TAG, "onError-extra: MEDIA_ERROR_IO");
+                    break;
+                /**位流不符合相关编码标准或文件规格。*/
+                case MediaPlayer.MEDIA_ERROR_MALFORMED:
+                    Log.e(TAG, "onError-extra: MEDIA_ERROR_MALFORMED");
+                    break;
+                /**位流符合相关编码标准或文件规格，但媒体框架不支持该功能。*/
+                case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
+                    Log.e(TAG, "onError-extra: MEDIA_ERROR_UNSUPPORTED");
+                    break;
+                /**一些操作需要太长时间才能完成，通常超过3-5秒。*/
+                case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+                    Log.e(TAG, "onError-extra: MEDIA_ERROR_TIMED_OUT");
+                    break;
+
+            }
             return false;
         }
     };
@@ -196,7 +241,7 @@ public class CustomPlayerView extends FrameLayout
     private MediaPlayer.OnInfoListener mOnInfoListener = new MediaPlayer.OnInfoListener() {
         @Override
         public boolean onInfo(MediaPlayer mediaPlayer, int what, int i1) {
-            switch (what){
+            switch (what) {
                 /**
                  * 未指定的媒体播放器信息
                  */
@@ -215,10 +260,17 @@ public class CustomPlayerView extends FrameLayout
                  */
                 case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
                     Log.d(TAG, "onInfo: MEDIA_INFO_VIDEO_RENDERING_START");
+
                     break;
+                /**
+                 * MediaPlayer暂时暂停内部播放，以缓冲更多的数据。
+                 */
                 case MediaPlayer.MEDIA_INFO_BUFFERING_START:
                     Log.d(TAG, "onInfo: MEDIA_INFO_BUFFERING_START");
                     break;
+                /**
+                 * 填充缓冲区后MediaPlayer正在恢复播放。
+                 */
                 case MediaPlayer.MEDIA_INFO_BUFFERING_END:
                     Log.d(TAG, "onInfo: MEDIA_INFO_BUFFERING_END");
                     break;
@@ -239,7 +291,6 @@ public class CustomPlayerView extends FrameLayout
                     break;
 
 
-
             }
 
             return false;
@@ -249,17 +300,17 @@ public class CustomPlayerView extends FrameLayout
     private MediaPlayer.OnVideoSizeChangedListener mOnVideoSizeChangedListener = new MediaPlayer.OnVideoSizeChangedListener() {
         @Override
         public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
-            if(textureView!=null){
-                textureView.setVideoSize(width,height);
+            if (textureView != null) {
+                textureView.setVideoSize(width, height);
             }
-            Log.d(TAG, "onVideoSizeChanged: width:"+width+"  height:"+height);
+            Log.d(TAG, "onVideoSizeChanged: width:" + width + "  height:" + height);
         }
     };
 
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        if(mSurfaceTexture ==null){
+        if (mSurfaceTexture == null) {
             mSurfaceTexture = surface;
         }
         perparePlayer(mSurfaceTexture);
@@ -267,35 +318,37 @@ public class CustomPlayerView extends FrameLayout
 
     private void perparePlayer(SurfaceTexture surface) {
         try {
-            mediaPlayer.setDataSource(mContext,Uri.parse(mUrlData),mHeaders);
-            if(surface !=null){
+            mediaPlayer.setDataSource(mContext, Uri.parse(mUrlData), mHeaders);
+            if (surface != null) {
                 mediaPlayer.setSurface(new Surface(surface));
             }
             mediaPlayer.prepareAsync();
-            mCurrentState =STATE_PREPARE;
+            mCurrentState = STATE_PREPARE;
 
 
         } catch (IOException e) {
             e.printStackTrace();
-            mCurrentState =STATE_ERROR;
+            mCurrentState = STATE_ERROR;
         }
-        if(controller !=null)
+        if (controller != null)
             controller.setPlayerState(mCurrentState);
     }
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+//        Log.d(TAG, "surface  onSurfaceTextureSizeChanged: ");
 
     }
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+//        Log.d(TAG, "surface   onSurfaceTextureDestroyed: ");
         return false;
     }
 
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
+//        Log.d(TAG, "surface   onSurfaceTextureUpdated: ");
     }
 
 
@@ -321,28 +374,68 @@ public class CustomPlayerView extends FrameLayout
 
     @Override
     public boolean isPrePared() {
-        return mCurrentState ==STATE_PREPARE_END;
+        return mCurrentState == STATE_PREPARE_END;
+    }
+
+    @Override
+    public boolean isPlaying() {
+        return mCurrentState == STATE_PLAYING;
+    }
+
+    @Override
+    public boolean isPause() {
+        return mCurrentState == STATE_PAUSE;
+    }
+
+    @Override
+    public boolean isCompleted() {
+        return mCurrentState == STATE_COMPLETED;
     }
 
     @Override
     public void seekto(int position) {
-        if(mediaPlayer!=null){
+        if (mediaPlayer != null) {
             mediaPlayer.seekTo(position);
         }
     }
 
     @Override
+    public void release() {
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+            mCurrentState = STATE_END;
+        }
+        if (mSurfaceTexture != null) {
+            mSurfaceTexture.release();
+            mSurfaceTexture = null;
+        }
+    }
+
+    @Override
+    public void reset() {
+        mCurrentState = STATE_IDLE;
+        if (mediaPlayer != null) {
+            mediaPlayer.reset();
+            mBufferPercentage = 0;
+        }
+        if (controller != null) {
+            controller.setPlayerState(mCurrentState);
+        }
+    }
+
+    @Override
     public long getDuration() {
-        return mediaPlayer.getDuration();
+
+        return !isPlaying() ? -2 : mediaPlayer.getDuration();
     }
 
     @Override
     public long getCurrentPosition() {
-        return mediaPlayer.getCurrentPosition();
+        return !isPlaying() ? -2 : mediaPlayer.getCurrentPosition();
     }
 
     @Override
     public int getBufferPercentage() {
-        return mBufferPercentage;
+        return !isPlaying() ? -2 : mBufferPercentage;
     }
 }
