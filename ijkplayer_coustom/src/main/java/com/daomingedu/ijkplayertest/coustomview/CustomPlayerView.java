@@ -310,10 +310,11 @@ public class CustomPlayerView extends FrameLayout
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+        Log.d(TAG, "surface onSurfaceTextureAvailable: ");
         if (mSurfaceTexture == null) {
             mSurfaceTexture = surface;
+            perparePlayer(mSurfaceTexture);
         }
-        perparePlayer(mSurfaceTexture);
     }
 
     private void perparePlayer(SurfaceTexture surface) {
@@ -327,6 +328,7 @@ public class CustomPlayerView extends FrameLayout
 
 
         } catch (IOException e) {
+            Log.e(TAG, "perparePlayer: "+e.toString() );
             e.printStackTrace();
             mCurrentState = STATE_ERROR;
         }
@@ -336,25 +338,27 @@ public class CustomPlayerView extends FrameLayout
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-//        Log.d(TAG, "surface  onSurfaceTextureSizeChanged: ");
+        Log.d(TAG, "surface  onSurfaceTextureSizeChanged: ");
 
     }
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-//        Log.d(TAG, "surface   onSurfaceTextureDestroyed: ");
-        return false;
+        surface.release();
+        mSurfaceTexture = null;
+        Log.d(TAG, "surface   onSurfaceTextureDestroyed: ");
+        return true;
     }
 
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-//        Log.d(TAG, "surface   onSurfaceTextureUpdated: ");
+        Log.d(TAG, "surface   onSurfaceTextureUpdated: ");
     }
 
 
     @Override
     public void start() {
-
+        initPlayer();
     }
 
     @Override

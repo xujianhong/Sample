@@ -34,7 +34,9 @@ public class VideoController extends BaseController
     TextView
             tv_position_time,
             tv_end_time;
-    LinearLayout ll_loading;
+    LinearLayout
+            ll_loading,
+            ll_error;
     AppCompatSeekBar seek;
     FrameLayout fl_main;
 
@@ -56,7 +58,13 @@ public class VideoController extends BaseController
     @Override
     public void setPlayerState(int currentState) {
 
+        if(currentState != CustomPlayer.STATE_ERROR&&ll_error.isClickable()){
+            ll_error.setVisibility(INVISIBLE);
+            ll_error.setClickable(false);
+        }
+
         switch (currentState) {
+
             case CustomPlayer.STATE_IDLE:
                 cancelUpdate();
                 fl_main.setBackgroundColor(getResources().getColor(android.R.color.transparent));
@@ -83,6 +91,14 @@ public class VideoController extends BaseController
             case CustomPlayer.STATE_COMPLETED:
                 cancelUpdate();
                 break;
+
+            case CustomPlayer.STATE_ERROR:
+                ll_loading.setVisibility(INVISIBLE);
+                ll_error.setVisibility(VISIBLE);
+                ll_error.setClickable(true);
+                break;
+
+
 
 
         }
@@ -123,14 +139,14 @@ public class VideoController extends BaseController
     }
 
     private void updateTime() {
-        Log.d(TAG, "updateTime: "+player.getCurrentState());
+        Log.d(TAG, "updateTime: " + player.getCurrentState());
         long position = player.getCurrentPosition();
         long duration = player.getDuration();
         int bufferPercentage = player.getBufferPercentage(); //缓存百分比(0-100)
 
-        if(position ==CustomPlayer.STATE_MEDIA_DATA_ERROR
-                ||duration==CustomPlayer.STATE_MEDIA_DATA_ERROR
-                ||bufferPercentage==CustomPlayer.STATE_MEDIA_DATA_ERROR){
+        if (position == CustomPlayer.STATE_MEDIA_DATA_ERROR
+                || duration == CustomPlayer.STATE_MEDIA_DATA_ERROR
+                || bufferPercentage == CustomPlayer.STATE_MEDIA_DATA_ERROR) {
             cancelUpdate();
             return;
         }
@@ -159,6 +175,9 @@ public class VideoController extends BaseController
         tv_end_time = (TextView) findViewById(R.id.tv_end_time);
 
         ll_loading = (LinearLayout) findViewById(R.id.ll_loading);
+        ll_error = (LinearLayout)findViewById(R.id.ll_error);
+
+
         seek = (AppCompatSeekBar) findViewById(R.id.seek);
 
         fl_main = (FrameLayout) findViewById(R.id.fl_main);
@@ -166,6 +185,8 @@ public class VideoController extends BaseController
 
         ib_play.setOnClickListener(this);
         ib_screen.setOnClickListener(this);
+
+        ll_error.setOnClickListener(this);
         seek.setOnSeekBarChangeListener(this);
     }
 
@@ -175,6 +196,9 @@ public class VideoController extends BaseController
             case R.id.ib_play:
                 break;
             case R.id.ib_screen:
+                break;
+            case R.id.ll_error://发生错误
+                player.start();
                 break;
 
         }

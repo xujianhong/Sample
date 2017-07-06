@@ -7,6 +7,8 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
+import java.io.IOException;
+
 /**
  * Created by jianhongxu on 2017/7/4.
  */
