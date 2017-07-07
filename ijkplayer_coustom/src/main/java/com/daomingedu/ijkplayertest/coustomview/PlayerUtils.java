@@ -1,5 +1,9 @@
 package com.daomingedu.ijkplayertest.coustomview;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
 import java.util.Formatter;
 import java.util.Locale;
 
@@ -29,5 +33,22 @@ public class PlayerUtils {
         } else {
             return mFormatter.format("%02d:%02d", minutes, seconds).toString();
         }
+    }
+
+    /**
+     * @param context
+     * @return
+     * 获取当前网络连接的类型信息
+     */
+    public static int getConnectedType(Context context) {
+        if (context != null) {
+            ConnectivityManager mConnectivityManager = (ConnectivityManager) context
+                    .getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
+            if (mNetworkInfo != null && mNetworkInfo.isAvailable()) {
+                return mNetworkInfo.getType();
+            }
+        }
+        return -1;
     }
 }

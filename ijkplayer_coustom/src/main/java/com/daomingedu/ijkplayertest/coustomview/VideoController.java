@@ -24,7 +24,7 @@ public class VideoController extends BaseController
         implements View.OnClickListener,
         SeekBar.OnSeekBarChangeListener {
 
-    private static final String TAG = "BaseController";
+    private static final String TAG = "VideoController";
     private Context mContext;
     CustomPlayer player;
 
@@ -32,18 +32,20 @@ public class VideoController extends BaseController
             ib_play,
             ib_screen;
     TextView
+            tv_buffing_Prepare,
             tv_position_time,
             tv_end_time;
     LinearLayout
             ll_loading,
             ll_error;
     AppCompatSeekBar seek;
-    FrameLayout fl_main;
+    FrameLayout
+            fl_main,
+            fl_completed;
 
     Timer mUpdateTimer;
     TimerTask mUpdateTimerTask;
 
-    private long lastPosition;
 
     public VideoController(@NonNull Context context) {
         super(context);
@@ -58,9 +60,13 @@ public class VideoController extends BaseController
     @Override
     public void setPlayerState(int currentState) {
 
-        if(currentState != CustomPlayer.STATE_ERROR&&ll_error.isClickable()){
+        if (currentState != CustomPlayer.STATE_ERROR && ll_error.isClickable()) {
             ll_error.setVisibility(INVISIBLE);
             ll_error.setClickable(false);
+        }
+        if(currentState!=CustomPlayer.STATE_COMPLETED&&fl_completed.isClickable()){
+            fl_completed.setVisibility(INVISIBLE);
+            fl_completed.setClickable(false);
         }
 
         switch (currentState) {
@@ -73,23 +79,36 @@ public class VideoController extends BaseController
                 tv_end_time.setText(PlayerUtils.formatTime(0));
                 seek.setProgress(0);
                 seek.setSecondaryProgress(0);
-                ib_play.setImageResource(R.mipmap.icon_play);
+                showBtn();
                 ib_screen.setImageResource(R.mipmap.icon_full_screen);
                 break;
+
+            case CustomPlayer.STATE_BUFFING_START:
             case CustomPlayer.STATE_INITIALIZED:
             case CustomPlayer.STATE_PREPARE:
                 fl_main.setBackgroundColor(getResources().getColor(R.color.colorPlayerBg));
                 ll_loading.setVisibility(VISIBLE);
                 break;
-            case CustomPlayer.STATE_PLAYING:
+
+            case CustomPlayer.STATE_PREPARE_END:
+                startUpdate(false);
+            case CustomPlayer.STATE_BUFFING_END:
                 fl_main.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 ll_loading.setVisibility(INVISIBLE);
-                ib_play.setImageResource(R.mipmap.icon_pause);
-                startUpdate();
+                showBtn();
+                break;
+            case CustomPlayer.PLAYER_STATE_PAUSE:
+                cancelUpdate();
+                break;
+            case CustomPlayer.PLAYER_STATE_PLAYING:
+                startUpdate(false);
                 break;
 
             case CustomPlayer.STATE_COMPLETED:
+                showBtn();
                 cancelUpdate();
+                fl_completed.setVisibility(VISIBLE);
+                fl_completed.setClickable(true);
                 break;
 
             case CustomPlayer.STATE_ERROR:
@@ -97,12 +116,26 @@ public class VideoController extends BaseController
                 ll_error.setVisibility(VISIBLE);
                 ll_error.setClickable(true);
                 break;
-
-
-
-
         }
     }
+
+    @Override
+    public void setBufferingUpdate(int bufferingUpdate) {
+        if(player.isPreparing()||player.isBuffing()){
+            tv_buffing_Prepare.setText("已缓冲"+bufferingUpdate+"%");
+        }
+        seek.setSecondaryProgress(bufferingUpdate);
+    }
+
+
+    private void showBtn() {
+        if (player.isPlaying()) {
+            ib_play.setImageResource(R.mipmap.icon_pause);
+        } else {
+            ib_play.setImageResource(R.mipmap.icon_play);
+        }
+    }
+
 
     private void cancelUpdate() {
         if (mUpdateTimer != null) {
@@ -115,7 +148,8 @@ public class VideoController extends BaseController
         }
     }
 
-    private void startUpdate() {
+
+    private void startUpdate(final boolean fromUser) {
         cancelUpdate();
         if (mUpdateTimer == null) {
             mUpdateTimer = new Timer();
@@ -128,7 +162,7 @@ public class VideoController extends BaseController
                     VideoController.this.post(new Runnable() {
                         @Override
                         public void run() {
-                            updateTime();
+                            updateTime(fromUser);
                         }
                     });
                 }
@@ -138,28 +172,32 @@ public class VideoController extends BaseController
         mUpdateTimer.schedule(mUpdateTimerTask, 0, 300);
     }
 
-    private void updateTime() {
-        Log.d(TAG, "updateTime: " + player.getCurrentState());
-        long position = player.getCurrentPosition();
-        long duration = player.getDuration();
-        int bufferPercentage = player.getBufferPercentage(); //缓存百分比(0-100)
+    private void updateTime(boolean fromUser) {
+//        Log.d(TAG, "updateTime: " + player.getCurrentState());
+        if (!fromUser) {
+            long position = player.getCurrentPosition();
+            long duration = player.getDuration();
 
-        if (position == CustomPlayer.STATE_MEDIA_DATA_ERROR
-                || duration == CustomPlayer.STATE_MEDIA_DATA_ERROR
-                || bufferPercentage == CustomPlayer.STATE_MEDIA_DATA_ERROR) {
-            cancelUpdate();
-            return;
-        }
-        seek.setSecondaryProgress(bufferPercentage);
-        int progress = (int) (100f * position / duration);
-        seek.setProgress(progress);
+            if (position == CustomPlayer.STATE_MEDIA_DATA_ERROR
+                    || duration == CustomPlayer.STATE_MEDIA_DATA_ERROR) {
+                cancelUpdate();
+                return;
+            }
 
-        tv_position_time.setText(PlayerUtils.formatTime(position));
-        tv_end_time.setText(PlayerUtils.formatTime(duration));
+            int progress = (int) (100f * position / duration);
+            seek.setProgress(progress);
+
+            tv_position_time.setText(PlayerUtils.formatTime(position));
+            tv_end_time.setText(PlayerUtils.formatTime(duration));
 
 //        Log.e(TAG, "updateTime: "+position);
+        } else { //手动推拽
 
-        lastPosition = position;
+            int position = (int) (seek.getProgress() * player.getDuration() / seek.getMax());
+            tv_position_time.setText(PlayerUtils.formatTime(position));
+
+        }
+
 
     }
 
@@ -171,16 +209,18 @@ public class VideoController extends BaseController
         ib_play = (ImageButton) findViewById(R.id.ib_play);
         ib_screen = (ImageButton) findViewById(R.id.ib_screen);
 
+        tv_buffing_Prepare = (TextView)findViewById(R.id.tv_buffing_Prepare);
         tv_position_time = (TextView) findViewById(R.id.tv_position_time);
         tv_end_time = (TextView) findViewById(R.id.tv_end_time);
 
         ll_loading = (LinearLayout) findViewById(R.id.ll_loading);
-        ll_error = (LinearLayout)findViewById(R.id.ll_error);
+        ll_error = (LinearLayout) findViewById(R.id.ll_error);
 
 
         seek = (AppCompatSeekBar) findViewById(R.id.seek);
 
         fl_main = (FrameLayout) findViewById(R.id.fl_main);
+        fl_completed = (FrameLayout)findViewById(R.id.fl_completed);
 
 
         ib_play.setOnClickListener(this);
@@ -188,12 +228,21 @@ public class VideoController extends BaseController
 
         ll_error.setOnClickListener(this);
         seek.setOnSeekBarChangeListener(this);
+        fl_completed.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.fl_completed:
             case R.id.ib_play:
+                if(player.isPlaying()){
+                    player.pause();
+                }
+                else{
+                    player.resume();
+                }
+                showBtn();
                 break;
             case R.id.ib_screen:
                 break;
@@ -204,25 +253,27 @@ public class VideoController extends BaseController
         }
     }
 
+
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        if (fromUser) { //用户操作
-
-            int position = (int) (((double) progress / seekBar.getMax()) * player.getDuration());
-            Log.e(TAG, "onProgressChanged: " + position);
-            seekTo(position);
-
-        }
+        startUpdate(fromUser);
     }
 
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
 
+        if(fl_completed.isClickable()){
+            fl_completed.setVisibility(INVISIBLE);
+            fl_completed.setClickable(false);
+        }
     }
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-
+        int position = (int) (((double) seekBar.getProgress() / seekBar.getMax()) * player.getDuration());
+        Log.e(TAG, "onStopTrackingTouch: " + position);
+        seekTo(position);
+        startUpdate(false);
     }
 
 
@@ -231,7 +282,7 @@ public class VideoController extends BaseController
 
         player.seekto(posittion);
 
-        lastPosition = posittion;
+
     }
 
 

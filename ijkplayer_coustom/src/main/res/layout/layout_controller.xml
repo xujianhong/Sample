@@ -2,13 +2,10 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tool="http://schemas.android.com/tools"
     android:id="@+id/fl_main"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPlayerBg"
-   >
-
-
+    android:orientation="vertical">
 
 
     <LinearLayout
@@ -16,24 +13,27 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:visibility="invisible"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="10dp"
+        android:visibility="invisible">
+
 
         <android.support.v4.widget.ContentLoadingProgressBar
             android:id="@+id/progress"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
             style="?android:attr/progressBarStyleSmall"
-            />
+            android:layout_width="20dp"
+            android:layout_height="20dp" />
+
         <TextView
+            android:id="@+id/tv_buffing_Prepare"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginLeft="5dp"
             android:layout_marginStart="5dp"
+            android:text="正在缓冲..."
             android:textColor="@android:color/white"
-            android:textSize="15sp"
-            android:text="正在缓冲..."/>
+            android:textSize="15sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -41,8 +41,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:visibility="invisible"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:visibility="invisible">
 
 
         <TextView
@@ -51,55 +51,82 @@
             android:layout_gravity="center"
             android:layout_marginLeft="5dp"
             android:layout_marginStart="5dp"
+            android:text="加载失败,点击重试"
             android:textColor="@android:color/white"
-            android:textSize="15sp"
-            android:text="加载失败,点击重试"/>
+            android:textSize="15sp" />
     </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/fl_completed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="horizontal"
+        android:visibility="invisible">
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginLeft="5dp"
+            android:layout_marginStart="5dp"
+            android:text="播放完成，是否重新播放"
+            android:textColor="@android:color/white"
+            android:textSize="15sp" />
+    </FrameLayout>
 
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/ll_navigation_bg"
+
         android:layout_gravity="bottom"
+        android:background="@drawable/ll_navigation_bg"
         android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/ib_play"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:scaleType="fitXY"
-            android:src="@mipmap/icon_play"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:padding="5dp"
             android:background="@android:color/transparent"
-            />
+            android:scaleType="centerInside"
+            android:src="@mipmap/icon_play" />
+
         <TextView
             android:id="@+id/tv_position_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            tool:text="00:00"
-            android:textColor="@android:color/white"/>
+            android:textColor="@android:color/white"
+            tool:text="00:00" />
+
         <android.support.v7.widget.AppCompatSeekBar
             android:id="@+id/seek"
             android:layout_width="0dp"
-            android:max="100"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+
+            android:max="100"
+            android:secondaryProgressTint="@color/colorPrimary" />
+
         <TextView
             android:id="@+id/tv_end_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            tool:text="00:00"
-            android:textColor="@android:color/white"/>
+            android:textColor="@android:color/white"
+            tool:text="00:00" />
+
         <ImageButton
             android:id="@+id/ib_screen"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:scaleType="fitXY"
-            android:src="@mipmap/icon_full_screen"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:padding="5dp"
             android:background="@android:color/transparent"
-            />
+            android:scaleType="centerInside"
+            android:src="@mipmap/icon_full_screen" />
     </LinearLayout>
 </FrameLayout>

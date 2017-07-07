@@ -1,15 +1,19 @@
 package com.daomingedu.ijkplayertest.coustomview;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.support.annotation.AttrRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
@@ -33,6 +37,7 @@ public class CustomPlayerView extends FrameLayout
     MediaPlayer mediaPlayer;
 
     int mCurrentState = STATE_IDLE;//当前状态
+    private int mDuration = -2;
 
 
     public boolean isLooping() {
@@ -43,7 +48,7 @@ public class CustomPlayerView extends FrameLayout
         this.looping = looping;
     }
 
-    private boolean looping; //是否循环播放
+    private boolean looping ; //是否循环播放
 
 
     MyTextureView textureView;
@@ -61,7 +66,7 @@ public class CustomPlayerView extends FrameLayout
     private SurfaceTexture mSurfaceTexture;
 
     private BaseController controller;
-    private int mBufferPercentage;
+
 
     public CustomPlayerView(@NonNull Context context) {
         this(context, null);
@@ -126,14 +131,22 @@ public class CustomPlayerView extends FrameLayout
         mediaPlayer.setOnErrorListener(mOnErrorListener);
         mediaPlayer.setOnInfoListener(mOnInfoListener);
         mediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
-        mCurrentState = STATE_INITIALIZED;
 
-        if (controller != null)
-            controller.setPlayerState(mCurrentState);
+        refreshController(STATE_INITIALIZED);
         initTextureView();
 
 //        perparePlayer(null);
 
+    }
+
+    /**
+     * 更新控制器状态
+     * @param currentState
+     */
+    public void refreshController(int currentState){
+        mCurrentState =currentState;
+        if(controller!=null)
+            controller.setPlayerState(mCurrentState);
     }
 
     /**
@@ -156,10 +169,11 @@ public class CustomPlayerView extends FrameLayout
 
     }
 
-    public void setUrlData(String urlData, Map<String, String> headers) {
+    public CustomPlayer setUrlData(String urlData, Map<String, String> headers) {
         mHeaders = headers;
         mUrlData = urlData;
 
+        return this;
     }
 
 
@@ -168,21 +182,21 @@ public class CustomPlayerView extends FrameLayout
         public void onPrepared(MediaPlayer mp) {
             if (mCurrentState != STATE_PREPARE) return;
 
+            mDuration = mp.getDuration(); //得到数据的总时长
             mp.start();
 
             mp.setVolume(1f, 1f);//设置音量
-            if (mp.isPlaying()) {
-                mCurrentState = STATE_PLAYING;
-            }
-            if (controller != null)
-                controller.setPlayerState(mCurrentState);
+            refreshController(STATE_PREPARE_END);
         }
     };
 
     private MediaPlayer.OnBufferingUpdateListener mOnBufferingUpdateListener = new MediaPlayer.OnBufferingUpdateListener() {
         @Override
         public void onBufferingUpdate(MediaPlayer MediaPlayer, int i) {
-            mBufferPercentage = i;
+            Log.d(TAG, "onBufferingUpdate: " + i);
+
+            if (controller != null)
+                controller.setBufferingUpdate(i);
         }
     };
 
@@ -190,10 +204,10 @@ public class CustomPlayerView extends FrameLayout
         @Override
         public void onCompletion(MediaPlayer MediaPlayer) {
 
-            mCurrentState = STATE_COMPLETED;
             Log.d(TAG, "onCompletion: media play Completion");
-            if (controller != null)
-                controller.setPlayerState(mCurrentState);
+            refreshController(STATE_COMPLETED);
+
+
         }
     };
 
@@ -267,12 +281,17 @@ public class CustomPlayerView extends FrameLayout
                  */
                 case MediaPlayer.MEDIA_INFO_BUFFERING_START:
                     Log.d(TAG, "onInfo: MEDIA_INFO_BUFFERING_START");
+
+
+                    refreshController(STATE_BUFFING_START);
+
                     break;
                 /**
                  * 填充缓冲区后MediaPlayer正在恢复播放。
                  */
                 case MediaPlayer.MEDIA_INFO_BUFFERING_END:
                     Log.d(TAG, "onInfo: MEDIA_INFO_BUFFERING_END");
+                    refreshController(STATE_BUFFING_END);
                     break;
                 case MediaPlayer.MEDIA_INFO_BAD_INTERLEAVING:
                     Log.d(TAG, "onInfo: MEDIA_INFO_BAD_INTERLEAVING");
@@ -310,7 +329,7 @@ public class CustomPlayerView extends FrameLayout
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        Log.d(TAG, "surface onSurfaceTextureAvailable: ");
+//        Log.d(TAG, "surface onSurfaceTextureAvailable: ");
         if (mSurfaceTexture == null) {
             mSurfaceTexture = surface;
             perparePlayer(mSurfaceTexture);
@@ -324,21 +343,22 @@ public class CustomPlayerView extends FrameLayout
                 mediaPlayer.setSurface(new Surface(surface));
             }
             mediaPlayer.prepareAsync();
-            mCurrentState = STATE_PREPARE;
+            refreshController(STATE_PREPARE);
+
 
 
         } catch (IOException e) {
-            Log.e(TAG, "perparePlayer: "+e.toString() );
+            Log.e(TAG, "perparePlayer: " + e.toString());
             e.printStackTrace();
-            mCurrentState = STATE_ERROR;
+            refreshController(STATE_ERROR);
+
         }
-        if (controller != null)
-            controller.setPlayerState(mCurrentState);
+
     }
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-        Log.d(TAG, "surface  onSurfaceTextureSizeChanged: ");
+//        Log.d(TAG, "surface  onSurfaceTextureSizeChanged: ");
 
     }
 
@@ -346,19 +366,57 @@ public class CustomPlayerView extends FrameLayout
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
         surface.release();
         mSurfaceTexture = null;
-        Log.d(TAG, "surface   onSurfaceTextureDestroyed: ");
+//        Log.d(TAG, "surface   onSurfaceTextureDestroyed: ");
         return true;
     }
 
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-        Log.d(TAG, "surface   onSurfaceTextureUpdated: ");
+//        Log.d(TAG, "surface   onSurfaceTextureUpdated: ");
     }
 
 
     @Override
     public void start() {
-        initPlayer();
+        if (TextUtils.isEmpty(mUrlData)) {
+            throw new IllegalArgumentException("The Video Path can not be empty");
+
+        }
+
+        if (PlayerUtils.getConnectedType(mContext) != ConnectivityManager.TYPE_WIFI
+                && mUrlData.contains("http://")) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+            builder.setMessage("当前网络不在WiFi状态下,是否继续播放?");
+            builder.setNegativeButton("不了", null);
+            builder.setPositiveButton("继续", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    initPlayer();
+                }
+            });
+
+            builder.show();
+        } else {
+            initPlayer();
+        }
+
+    }
+
+    @Override
+    public void pause() {
+        if (mediaPlayer != null) {
+
+            mediaPlayer.pause();
+            refreshController(PLAYER_STATE_PAUSE);
+        }
+    }
+
+    @Override
+    public void resume() {
+        if (mediaPlayer != null) {
+            mediaPlayer.start();
+            refreshController(PLAYER_STATE_PLAYING);
+        }
     }
 
     @Override
@@ -383,13 +441,14 @@ public class CustomPlayerView extends FrameLayout
 
     @Override
     public boolean isPlaying() {
-        return mCurrentState == STATE_PLAYING;
+        return mediaPlayer != null && mediaPlayer.isPlaying();
     }
 
     @Override
-    public boolean isPause() {
-        return mCurrentState == STATE_PAUSE;
+    public boolean isBuffing() {
+        return mCurrentState == STATE_BUFFING_START;
     }
+
 
     @Override
     public boolean isCompleted() {
@@ -417,20 +476,20 @@ public class CustomPlayerView extends FrameLayout
 
     @Override
     public void reset() {
-        mCurrentState = STATE_IDLE;
+
         if (mediaPlayer != null) {
             mediaPlayer.reset();
-            mBufferPercentage = 0;
+
         }
-        if (controller != null) {
-            controller.setPlayerState(mCurrentState);
-        }
+        refreshController(STATE_IDLE);
+
     }
 
     @Override
     public long getDuration() {
 
-        return !isPlaying() ? -2 : mediaPlayer.getDuration();
+        return mDuration;
+
     }
 
     @Override
@@ -438,8 +497,4 @@ public class CustomPlayerView extends FrameLayout
         return !isPlaying() ? -2 : mediaPlayer.getCurrentPosition();
     }
 
-    @Override
-    public int getBufferPercentage() {
-        return !isPlaying() ? -2 : mBufferPercentage;
-    }
 }

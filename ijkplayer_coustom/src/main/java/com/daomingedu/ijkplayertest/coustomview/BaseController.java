@@ -27,4 +27,7 @@ public abstract class BaseController extends FrameLayout{
 
     public abstract void setPlayerState(int currentState);
 
+
+    public abstract void setBufferingUpdate(int bufferingUpdate);
+
 }
