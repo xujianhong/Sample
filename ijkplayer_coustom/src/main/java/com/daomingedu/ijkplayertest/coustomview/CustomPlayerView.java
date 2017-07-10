@@ -142,8 +142,6 @@ public class CustomPlayerView extends FrameLayout
         refreshController(STATE_INITIALIZED);
         initTextureView();
 
-//        perparePlayer(null);
-
     }
 
     /**
@@ -357,11 +355,11 @@ public class CustomPlayerView extends FrameLayout
 
 
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                textureView.setSurfaceTexture(mSurfaceTexture);
-            } else {
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+//                textureView.setSurfaceTexture(mSurfaceTexture);
+//            } else {
                 mediaPlayer.setSurface(new Surface(surface));
-            }
+//            }
         }
     }
 
@@ -463,17 +461,7 @@ public class CustomPlayerView extends FrameLayout
         }
     }
 
-//    @Override
-//    public void stop() {
-//        if (mCurrentState != STATE_INITIALIZED&&mCurrentState!=STATE_PREPARE) {
-//            if (mediaPlayer != null) {
-//                mCurrentPosition = mediaPlayer.getCurrentPosition();
-//                mediaPlayer.pause();
-//                mediaPlayer.stop();
-//                refreshController(STATE_STOP);
-//            }
-//        }
-//    }
+
 
     @Override
     public int getCurrentState() {
