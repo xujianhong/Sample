@@ -11,7 +11,7 @@
     <com.daomingedu.ijkplayertest.coustomview.CustomPlayerView
         android:id="@+id/cp_view"
         android:layout_width="match_parent"
-        android:layout_height="200dp" />
+        android:layout_height="220dp" />
 
 
     <Button

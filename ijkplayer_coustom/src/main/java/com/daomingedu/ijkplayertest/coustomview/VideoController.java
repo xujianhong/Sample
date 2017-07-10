@@ -227,7 +227,9 @@ public class VideoController extends BaseController
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.fl_completed:
+                Log.d(TAG, "onClick: fl_completed");
             case R.id.ib_play:
+                Log.d(TAG, "onClick: ib_play");
                 if (player.isPlaying()) {
                     player.pause();
                 } else {
@@ -236,6 +238,7 @@ public class VideoController extends BaseController
                 showBtn();
                 break;
             case R.id.ib_screen:
+                Log.d(TAG, "onClick: ib_screen");
                 if (player.getDisplayState() == CustomPlayer.DISPLAY_SMALL) {
                    player.fullScreen();
                 }
@@ -245,6 +248,8 @@ public class VideoController extends BaseController
                 displayBtn();
                 break;
             case R.id.ll_error://发生错误
+                Log.d(TAG, "onClick: ll_error");
+
                 player.start();
                 break;
 

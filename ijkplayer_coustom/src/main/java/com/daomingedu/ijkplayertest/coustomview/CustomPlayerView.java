@@ -355,11 +355,11 @@ public class CustomPlayerView extends FrameLayout
 
 
         } else {
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-//                textureView.setSurfaceTexture(mSurfaceTexture);
-//            } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                textureView.setSurfaceTexture(mSurfaceTexture);
+            } else {
                 mediaPlayer.setSurface(new Surface(surface));
-//            }
+            }
         }
     }
 
@@ -549,7 +549,9 @@ public class CustomPlayerView extends FrameLayout
     @Override
     public void fullScreen() {
         if (mCurrentDisplay == DISPLAY_SMALL) {
-
+            ((AppCompatActivity) mContext).getWindow()
+                    .setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                            WindowManager.LayoutParams.FLAG_FULLSCREEN);
             ((AppCompatActivity) mContext).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 this.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
@@ -560,6 +562,10 @@ public class CustomPlayerView extends FrameLayout
             this.removeView(mContainer);
             ViewGroup viewGroup = (ViewGroup) ((AppCompatActivity) mContext)
                     .findViewById(android.R.id.content);
+            for (int i = 0; i < this.getChildCount(); i++) {
+                this.getChildAt(i).setFocusable(false);
+            }
+
             viewGroup.addView(mContainer);
             Log.d(TAG, "fullScreen: " + viewGroup.getChildCount());
             mCurrentDisplay = DISPLAY_FULL;
@@ -569,7 +575,9 @@ public class CustomPlayerView extends FrameLayout
     @Override
     public void smallScreen() {
         if (mCurrentDisplay == DISPLAY_FULL) {
-
+            ((AppCompatActivity) mContext)
+                    .getWindow()
+                    .clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             ((AppCompatActivity) mContext).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             this.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
             ViewGroup viewGroup = (ViewGroup) ((AppCompatActivity) mContext)
@@ -580,6 +588,9 @@ public class CustomPlayerView extends FrameLayout
                     ViewGroup.LayoutParams.MATCH_PARENT);
 
             this.addView(mContainer, params);
+            for (int i = 0; i < this.getChildCount(); i++) {
+                this.getChildAt(i).setFocusable(true);
+            }
             Log.d(TAG, "smallScreen: " + viewGroup.getChildCount());
             mCurrentDisplay = DISPLAY_SMALL;
         }
