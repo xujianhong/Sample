@@ -13,7 +13,8 @@ import com.daomingedu.ijkplayertest.coustomview.CustomPlayerView;
 
 public class MainActivity extends AppCompatActivity {
     String urlData1 = "http://vfx.mtime.cn/Video/2017/03/31/mp4/170331093811717750.mp4";
-    String urlData = "/storage/emulated/0/Movies/video_20170512_163255.mp4";
+//    String urlData = "/storage/emulated/0/Movies/video_20170512_163255.mp4";
+    String urlData = "http://vfx.mtime.cn/Video/2017/05/25/mp4/170525100752401900.mp4";
     CustomPlayerView cp_view;
 
     @Override

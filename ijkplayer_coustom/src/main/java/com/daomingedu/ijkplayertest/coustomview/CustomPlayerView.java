@@ -2,12 +2,14 @@ package com.daomingedu.ijkplayertest.coustomview;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.os.Build;
 import android.support.annotation.AttrRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -18,6 +20,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -37,8 +40,11 @@ public class CustomPlayerView extends FrameLayout
     MediaPlayer mediaPlayer;
 
     int mCurrentState = STATE_IDLE;//当前状态
-    private int mDuration = -2;
+    int mCurrentDisplay = DISPLAY_SMALL;
+    private int mDuration = STATE_MEDIA_DATA_ERROR; //总的时长
 
+
+    private boolean isBackground = false;
 
     public boolean isLooping() {
         return looping;
@@ -48,7 +54,7 @@ public class CustomPlayerView extends FrameLayout
         this.looping = looping;
     }
 
-    private boolean looping ; //是否循环播放
+    private boolean looping; //是否循环播放
 
 
     MyTextureView textureView;
@@ -120,7 +126,7 @@ public class CustomPlayerView extends FrameLayout
 
             reset();
         }
-
+        isBackground = false;
         mediaPlayer.setLooping(looping);
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         //keep screen on
@@ -132,6 +138,7 @@ public class CustomPlayerView extends FrameLayout
         mediaPlayer.setOnInfoListener(mOnInfoListener);
         mediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
 
+
         refreshController(STATE_INITIALIZED);
         initTextureView();
 
@@ -141,11 +148,14 @@ public class CustomPlayerView extends FrameLayout
 
     /**
      * 更新控制器状态
+     *
      * @param currentState
      */
-    public void refreshController(int currentState){
-        mCurrentState =currentState;
-        if(controller!=null)
+    public void refreshController(int currentState) {
+        if (currentState != STATE_CURRENT_NULL) {
+            mCurrentState = currentState;
+        }
+        if (controller != null)
             controller.setPlayerState(mCurrentState);
     }
 
@@ -183,9 +193,12 @@ public class CustomPlayerView extends FrameLayout
             if (mCurrentState != STATE_PREPARE) return;
 
             mDuration = mp.getDuration(); //得到数据的总时长
+
             mp.start();
 
             mp.setVolume(1f, 1f);//设置音量
+
+
             refreshController(STATE_PREPARE_END);
         }
     };
@@ -205,7 +218,11 @@ public class CustomPlayerView extends FrameLayout
         public void onCompletion(MediaPlayer MediaPlayer) {
 
             Log.d(TAG, "onCompletion: media play Completion");
-            refreshController(STATE_COMPLETED);
+            if (mCurrentState != STATE_ERROR) {
+                refreshController(STATE_COMPLETED);
+            } else {
+                refreshController(STATE_CURRENT_NULL);
+            }
 
 
         }
@@ -214,6 +231,7 @@ public class CustomPlayerView extends FrameLayout
     private MediaPlayer.OnErrorListener mOnErrorListener = new MediaPlayer.OnErrorListener() {
         @Override
         public boolean onError(MediaPlayer mediaPlayer, int what, int extra) {
+            refreshController(STATE_ERROR);
             switch (what) {
                 /**
                  * 未指定的媒体播放器错误。
@@ -246,6 +264,7 @@ public class CustomPlayerView extends FrameLayout
                 case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
                     Log.e(TAG, "onError-extra: MEDIA_ERROR_TIMED_OUT");
                     break;
+
 
             }
             return false;
@@ -291,6 +310,7 @@ public class CustomPlayerView extends FrameLayout
                  */
                 case MediaPlayer.MEDIA_INFO_BUFFERING_END:
                     Log.d(TAG, "onInfo: MEDIA_INFO_BUFFERING_END");
+
                     refreshController(STATE_BUFFING_END);
                     break;
                 case MediaPlayer.MEDIA_INFO_BAD_INTERLEAVING:
@@ -329,22 +349,33 @@ public class CustomPlayerView extends FrameLayout
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-//        Log.d(TAG, "surface onSurfaceTextureAvailable: ");
+        Log.d(TAG, "surface onSurfaceTextureAvailable: ");
         if (mSurfaceTexture == null) {
+            isBackground = true;
             mSurfaceTexture = surface;
-            perparePlayer(mSurfaceTexture);
+            preparePlayer(mSurfaceTexture);
+
+
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                textureView.setSurfaceTexture(mSurfaceTexture);
+            } else {
+                mediaPlayer.setSurface(new Surface(surface));
+            }
         }
     }
 
-    private void perparePlayer(SurfaceTexture surface) {
+    private void preparePlayer(SurfaceTexture surface) {
+        Log.d(TAG, "preparePlayer: mCurrentState:" + mCurrentState);
         try {
-            mediaPlayer.setDataSource(mContext, Uri.parse(mUrlData), mHeaders);
+            if (mCurrentState == STATE_INITIALIZED) {
+                mediaPlayer.setDataSource(mContext, Uri.parse(mUrlData), mHeaders);
+            }
             if (surface != null) {
                 mediaPlayer.setSurface(new Surface(surface));
             }
             mediaPlayer.prepareAsync();
             refreshController(STATE_PREPARE);
-
 
 
         } catch (IOException e) {
@@ -358,16 +389,20 @@ public class CustomPlayerView extends FrameLayout
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-//        Log.d(TAG, "surface  onSurfaceTextureSizeChanged: ");
+        Log.d(TAG, "surface  onSurfaceTextureSizeChanged: ");
 
     }
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        surface.release();
-        mSurfaceTexture = null;
-//        Log.d(TAG, "surface   onSurfaceTextureDestroyed: ");
-        return true;
+        Log.d(TAG, "surface   onSurfaceTextureDestroyed: " + isBackground);
+        if (!isBackground) {
+            mSurfaceTexture = null;
+
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -407,17 +442,38 @@ public class CustomPlayerView extends FrameLayout
         if (mediaPlayer != null) {
 
             mediaPlayer.pause();
-            refreshController(PLAYER_STATE_PAUSE);
+            if (!mediaPlayer.isPlaying()) {
+                refreshController(PLAYER_STATE_PAUSE);
+            } else {
+                refreshController(STATE_CURRENT_NULL);
+            }
         }
     }
 
     @Override
     public void resume() {
         if (mediaPlayer != null) {
+
             mediaPlayer.start();
-            refreshController(PLAYER_STATE_PLAYING);
+            if (mediaPlayer.isPlaying()) {
+                refreshController(PLAYER_STATE_PLAYING);
+            } else {
+                refreshController(STATE_CURRENT_NULL);
+            }
         }
     }
+
+//    @Override
+//    public void stop() {
+//        if (mCurrentState != STATE_INITIALIZED&&mCurrentState!=STATE_PREPARE) {
+//            if (mediaPlayer != null) {
+//                mCurrentPosition = mediaPlayer.getCurrentPosition();
+//                mediaPlayer.pause();
+//                mediaPlayer.stop();
+//                refreshController(STATE_STOP);
+//            }
+//        }
+//    }
 
     @Override
     public int getCurrentState() {
@@ -456,7 +512,7 @@ public class CustomPlayerView extends FrameLayout
     }
 
     @Override
-    public void seekto(int position) {
+    public void seekTo(int position) {
         if (mediaPlayer != null) {
             mediaPlayer.seekTo(position);
         }
@@ -495,6 +551,50 @@ public class CustomPlayerView extends FrameLayout
     @Override
     public long getCurrentPosition() {
         return !isPlaying() ? -2 : mediaPlayer.getCurrentPosition();
+    }
+
+    @Override
+    public int getDisplayState() {
+        return mCurrentDisplay;
+    }
+
+    @Override
+    public void fullScreen() {
+        if (mCurrentDisplay == DISPLAY_SMALL) {
+
+            ((AppCompatActivity) mContext).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                this.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+            } else {
+                this.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+            }
+
+            this.removeView(mContainer);
+            ViewGroup viewGroup = (ViewGroup) ((AppCompatActivity) mContext)
+                    .findViewById(android.R.id.content);
+            viewGroup.addView(mContainer);
+            Log.d(TAG, "fullScreen: " + viewGroup.getChildCount());
+            mCurrentDisplay = DISPLAY_FULL;
+        }
+    }
+
+    @Override
+    public void smallScreen() {
+        if (mCurrentDisplay == DISPLAY_FULL) {
+
+            ((AppCompatActivity) mContext).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            this.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+            ViewGroup viewGroup = (ViewGroup) ((AppCompatActivity) mContext)
+                    .findViewById(android.R.id.content);
+            viewGroup.removeView(mContainer);
+            ViewGroup.LayoutParams params = new LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT);
+
+            this.addView(mContainer, params);
+            Log.d(TAG, "smallScreen: " + viewGroup.getChildCount());
+            mCurrentDisplay = DISPLAY_SMALL;
+        }
     }
 
 }

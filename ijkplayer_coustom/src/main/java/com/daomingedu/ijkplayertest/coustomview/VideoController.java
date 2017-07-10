@@ -60,11 +60,12 @@ public class VideoController extends BaseController
     @Override
     public void setPlayerState(int currentState) {
 
+        displayBtn();
         if (currentState != CustomPlayer.STATE_ERROR && ll_error.isClickable()) {
             ll_error.setVisibility(INVISIBLE);
             ll_error.setClickable(false);
         }
-        if(currentState!=CustomPlayer.STATE_COMPLETED&&fl_completed.isClickable()){
+        if (currentState != CustomPlayer.STATE_COMPLETED && fl_completed.isClickable()) {
             fl_completed.setVisibility(INVISIBLE);
             fl_completed.setClickable(false);
         }
@@ -121,19 +122,10 @@ public class VideoController extends BaseController
 
     @Override
     public void setBufferingUpdate(int bufferingUpdate) {
-        if(player.isPreparing()||player.isBuffing()){
-            tv_buffing_Prepare.setText("已缓冲"+bufferingUpdate+"%");
+        if (player.isPreparing() || player.isBuffing()) {
+            tv_buffing_Prepare.setText("已缓冲" + bufferingUpdate + "%");
         }
         seek.setSecondaryProgress(bufferingUpdate);
-    }
-
-
-    private void showBtn() {
-        if (player.isPlaying()) {
-            ib_play.setImageResource(R.mipmap.icon_pause);
-        } else {
-            ib_play.setImageResource(R.mipmap.icon_play);
-        }
     }
 
 
@@ -209,7 +201,7 @@ public class VideoController extends BaseController
         ib_play = (ImageButton) findViewById(R.id.ib_play);
         ib_screen = (ImageButton) findViewById(R.id.ib_screen);
 
-        tv_buffing_Prepare = (TextView)findViewById(R.id.tv_buffing_Prepare);
+        tv_buffing_Prepare = (TextView) findViewById(R.id.tv_buffing_Prepare);
         tv_position_time = (TextView) findViewById(R.id.tv_position_time);
         tv_end_time = (TextView) findViewById(R.id.tv_end_time);
 
@@ -220,7 +212,7 @@ public class VideoController extends BaseController
         seek = (AppCompatSeekBar) findViewById(R.id.seek);
 
         fl_main = (FrameLayout) findViewById(R.id.fl_main);
-        fl_completed = (FrameLayout)findViewById(R.id.fl_completed);
+        fl_completed = (FrameLayout) findViewById(R.id.fl_completed);
 
 
         ib_play.setOnClickListener(this);
@@ -236,15 +228,21 @@ public class VideoController extends BaseController
         switch (v.getId()) {
             case R.id.fl_completed:
             case R.id.ib_play:
-                if(player.isPlaying()){
+                if (player.isPlaying()) {
                     player.pause();
-                }
-                else{
+                } else {
                     player.resume();
                 }
                 showBtn();
                 break;
             case R.id.ib_screen:
+                if (player.getDisplayState() == CustomPlayer.DISPLAY_SMALL) {
+                   player.fullScreen();
+                }
+                else if(player.getDisplayState() == CustomPlayer.DISPLAY_FULL){
+                    player.smallScreen();
+                }
+                displayBtn();
                 break;
             case R.id.ll_error://发生错误
                 player.start();
@@ -253,6 +251,21 @@ public class VideoController extends BaseController
         }
     }
 
+    private void displayBtn() {
+        if (player.getDisplayState() == CustomPlayer.DISPLAY_SMALL) {
+            ib_screen.setImageResource(R.mipmap.icon_full_screen);
+        } else if (player.getDisplayState() == CustomPlayer.DISPLAY_FULL) {
+            ib_screen.setImageResource(R.mipmap.icon_crop_screen);
+        }
+    }
+
+    private void showBtn() {
+        if (player.isPlaying()) {
+            ib_play.setImageResource(R.mipmap.icon_pause);
+        } else {
+            ib_play.setImageResource(R.mipmap.icon_play);
+        }
+    }
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -262,7 +275,7 @@ public class VideoController extends BaseController
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
 
-        if(fl_completed.isClickable()){
+        if (fl_completed.isClickable()) {
             fl_completed.setVisibility(INVISIBLE);
             fl_completed.setClickable(false);
         }
@@ -280,7 +293,7 @@ public class VideoController extends BaseController
     private void seekTo(int posittion) {
 
 
-        player.seekto(posittion);
+        player.seekTo(posittion);
 
 
     }
