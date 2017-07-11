@@ -6,8 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/colorPlayerBg"
     android:orientation="vertical">
-
-
+    <!--加载-->
     <LinearLayout
         android:id="@+id/ll_loading"
         android:layout_width="wrap_content"
@@ -35,7 +34,7 @@
             android:textColor="@android:color/white"
             android:textSize="15sp" />
     </LinearLayout>
-
+    <!--错误-->
     <LinearLayout
         android:id="@+id/ll_error"
         android:layout_width="wrap_content"
@@ -56,10 +55,12 @@
             android:textSize="15sp" />
     </LinearLayout>
 
+    <!--已完成-->
     <FrameLayout
         android:id="@+id/fl_completed"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:padding="10dp"
         android:layout_gravity="center"
         android:orientation="horizontal"
         android:visibility="invisible">
@@ -77,6 +78,41 @@
     </FrameLayout>
 
 
+    <!--快进快退-->
+    <LinearLayout
+        android:id="@+id/ll_scroller"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="invisible"
+        android:padding="5dp"
+        android:background="@drawable/prompt_window_bg"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iv_scroller"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:src="@mipmap/ic_fast_forward" />
+        <TextView
+            android:id="@+id/tv_scroller"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="5dp"
+            android:textColor="@android:color/white"
+            android:textSize="15sp"
+            android:text="00:00/00:00"/>
+        <ProgressBar
+            android:id="@+id/pb_scroller"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"
+            />
+    </LinearLayout>
+    <!--底部导航栏-->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -2,12 +2,16 @@ package com.daomingedu.ijkplayertest.coustomview;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.AppCompatSeekBar;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -22,9 +26,16 @@ import java.util.TimerTask;
 
 public class VideoController extends BaseController
         implements View.OnClickListener,
-        SeekBar.OnSeekBarChangeListener {
+        SeekBar.OnSeekBarChangeListener, View.OnTouchListener {
 
     private static final String TAG = "VideoController";
+    private static final int SLIDE_UP_DOWN = 1; //左右滑动
+    private static final int SWIPE_LEFT_RIGHT = 2; //上下滑动
+    private static final int SCROLLER_NORMAL = 0; //无滑动
+    private static final int FROM_SEEKER_USER = 4;//seekBar拖拽
+    private static final int FROM_PLAYER = 3;//player自得的
+    private static final int FROM_SCROLLER = 5;//滑动拖拽
+
     private Context mContext;
     CustomPlayer player;
 
@@ -34,17 +45,31 @@ public class VideoController extends BaseController
     TextView
             tv_buffing_Prepare,
             tv_position_time,
-            tv_end_time;
+            tv_end_time,
+            tv_scroller;
     LinearLayout
             ll_loading,
-            ll_error;
+            ll_error,
+            ll_scroller;
     AppCompatSeekBar seek;
     FrameLayout
             fl_main,
             fl_completed;
+    ImageView iv_scroller;
 
+    ProgressBar pb_scroller;
     Timer mUpdateTimer;
     TimerTask mUpdateTimerTask;
+
+    boolean isfull;//是否全屏
+
+
+    private float downX;
+    private float downY;
+    private float differenceX; //滑动X的差值
+    private float differenceY; //滑动Y的差值
+    private int scroller = SCROLLER_NORMAL;
+    private long scrollerCurrentPosition = 0; //滑动当前的位置
 
 
     public VideoController(@NonNull Context context) {
@@ -70,6 +95,7 @@ public class VideoController extends BaseController
             fl_completed.setClickable(false);
         }
 
+
         switch (currentState) {
 
             case CustomPlayer.STATE_IDLE:
@@ -92,7 +118,7 @@ public class VideoController extends BaseController
                 break;
 
             case CustomPlayer.STATE_PREPARE_END:
-                startUpdate(false);
+                startUpdate(FROM_PLAYER);
             case CustomPlayer.STATE_BUFFING_END:
                 fl_main.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 ll_loading.setVisibility(INVISIBLE);
@@ -102,7 +128,7 @@ public class VideoController extends BaseController
                 cancelUpdate();
                 break;
             case CustomPlayer.PLAYER_STATE_PLAYING:
-                startUpdate(false);
+                startUpdate(FROM_PLAYER);
                 break;
 
             case CustomPlayer.STATE_COMPLETED:
@@ -141,7 +167,7 @@ public class VideoController extends BaseController
     }
 
 
-    private void startUpdate(final boolean fromUser) {
+    private void startUpdate(final int fromUser) {
         cancelUpdate();
         if (mUpdateTimer == null) {
             mUpdateTimer = new Timer();
@@ -164,9 +190,10 @@ public class VideoController extends BaseController
         mUpdateTimer.schedule(mUpdateTimerTask, 0, 300);
     }
 
-    private void updateTime(boolean fromUser) {
+    private void updateTime(int from) {
 //        Log.d(TAG, "updateTime: " + player.getCurrentState());
-        if (!fromUser) {
+        if (from == FROM_PLAYER || from == FROM_SCROLLER) {
+            //导航栏的时间显示跟着播放器走
             long position = player.getCurrentPosition();
             long duration = player.getDuration();
 
@@ -182,9 +209,23 @@ public class VideoController extends BaseController
             tv_position_time.setText(PlayerUtils.formatTime(position));
             tv_end_time.setText(PlayerUtils.formatTime(duration));
 
-//        Log.e(TAG, "updateTime: "+position);
-        } else { //手动推拽
+            if (from == FROM_SCROLLER) {//滑动推拽
+                if (scrollerCurrentPosition == 0) {
+                    scrollerCurrentPosition = position;
+                }
 
+                long scrollerPosition = scrollerCurrentPosition + (long) (differenceX * duration / getWidth());
+                if (scrollerPosition >= duration)
+                    scrollerPosition = duration;
+                int scrollerProgress = (int) (100f * scrollerPosition / duration);
+                pb_scroller.setProgress(scrollerProgress);
+                tv_scroller.setText(PlayerUtils.formatTime(scrollerPosition) + "/" + PlayerUtils.formatTime(duration));
+
+
+            }
+
+//        Log.e(TAG, "updateTime: "+position);
+        } else if (from == FROM_SEEKER_USER) { //seekBar推拽
             int position = (int) (seek.getProgress() * player.getDuration() / seek.getMax());
             tv_position_time.setText(PlayerUtils.formatTime(position));
 
@@ -204,12 +245,17 @@ public class VideoController extends BaseController
         tv_buffing_Prepare = (TextView) findViewById(R.id.tv_buffing_Prepare);
         tv_position_time = (TextView) findViewById(R.id.tv_position_time);
         tv_end_time = (TextView) findViewById(R.id.tv_end_time);
+        tv_scroller = (TextView) findViewById(R.id.tv_scroller);
 
         ll_loading = (LinearLayout) findViewById(R.id.ll_loading);
         ll_error = (LinearLayout) findViewById(R.id.ll_error);
+        ll_scroller = (LinearLayout) findViewById(R.id.ll_scroller);
 
+        iv_scroller = (ImageView) findViewById(R.id.iv_scroller);
 
         seek = (AppCompatSeekBar) findViewById(R.id.seek);
+
+        pb_scroller = (ProgressBar) findViewById(R.id.pb_scroller);
 
         fl_main = (FrameLayout) findViewById(R.id.fl_main);
         fl_completed = (FrameLayout) findViewById(R.id.fl_completed);
@@ -221,6 +267,8 @@ public class VideoController extends BaseController
         ll_error.setOnClickListener(this);
         seek.setOnSeekBarChangeListener(this);
         fl_completed.setOnClickListener(this);
+        fl_main.setOnTouchListener(this);
+
     }
 
     @Override
@@ -240,9 +288,8 @@ public class VideoController extends BaseController
             case R.id.ib_screen:
                 Log.d(TAG, "onClick: ib_screen");
                 if (player.getDisplayState() == CustomPlayer.DISPLAY_SMALL) {
-                   player.fullScreen();
-                }
-                else if(player.getDisplayState() == CustomPlayer.DISPLAY_FULL){
+                    player.fullScreen();
+                } else if (player.getDisplayState() == CustomPlayer.DISPLAY_FULL) {
                     player.smallScreen();
                 }
                 displayBtn();
@@ -259,8 +306,10 @@ public class VideoController extends BaseController
     private void displayBtn() {
         if (player.getDisplayState() == CustomPlayer.DISPLAY_SMALL) {
             ib_screen.setImageResource(R.mipmap.icon_full_screen);
+            isfull = false;
         } else if (player.getDisplayState() == CustomPlayer.DISPLAY_FULL) {
             ib_screen.setImageResource(R.mipmap.icon_crop_screen);
+            isfull = true;
         }
     }
 
@@ -274,7 +323,9 @@ public class VideoController extends BaseController
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        startUpdate(fromUser);
+        if (fromUser) {
+            startUpdate(FROM_SEEKER_USER);
+        }
     }
 
     @Override
@@ -291,7 +342,7 @@ public class VideoController extends BaseController
         int position = (int) (((double) seekBar.getProgress() / seekBar.getMax()) * player.getDuration());
         Log.e(TAG, "onStopTrackingTouch: " + position);
         seekTo(position);
-        startUpdate(false);
+        startUpdate(FROM_PLAYER);
     }
 
 
@@ -300,6 +351,91 @@ public class VideoController extends BaseController
 
         player.seekTo(posittion);
 
+
+    }
+
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        if (!isfull) return false;
+
+        int action = MotionEventCompat.getActionMasked(event);
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                downX = event.getX();
+                downY = event.getY();
+//                Log.w(TAG, "onTouch: ACTION_DOWN ");
+                scroller = SCROLLER_NORMAL;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                differenceX = event.getX() - downX;//获得滑动差值
+                differenceY = event.getY() -downY;
+//                if (event.getEventTime() - event.getDownTime() < 100) {
+//
+//                    break;
+//                }
+                showScroller();
+                if (Math.abs(differenceX) > Math.abs(differenceY) && scroller != SLIDE_UP_DOWN) {//左右滑动
+                    if (scroller != SWIPE_LEFT_RIGHT) {
+                        scroller = SWIPE_LEFT_RIGHT;
+                    }
+                } else if (Math.abs(differenceX) < Math.abs(differenceY) && scroller != SWIPE_LEFT_RIGHT) {//上下滑动
+                    if (scroller != SLIDE_UP_DOWN) {
+                        scroller = SLIDE_UP_DOWN;
+                    }
+                }
+                if(scroller ==SWIPE_LEFT_RIGHT){//左右滑动
+                    if (differenceX < 0 && !"rewind".equals(iv_scroller.getTag())) {//后退
+                        iv_scroller.setImageResource(R.mipmap.ic_fast_rewind);
+                        iv_scroller.setTag("rewind");
+
+                    } else if (differenceX >= 0 && !"forward".equals(iv_scroller.getTag())) {//快进
+                        iv_scroller.setImageResource(R.mipmap.ic_fast_forward);
+                        iv_scroller.setTag("forward");
+
+                    }
+                    startUpdate(FROM_SCROLLER);
+
+                    Log.w(TAG, "onTouch: Swipe left and right"+ differenceX);
+                }
+                else if(scroller == SLIDE_UP_DOWN){
+                    Log.w(TAG, "onTouch: Slide up and down" );
+                }
+
+                break;
+            case MotionEvent.ACTION_UP:
+                if (scroller == SWIPE_LEFT_RIGHT) {//左右滑动
+                    int position = (int) (((double) pb_scroller.getProgress() / pb_scroller.getMax()) * player.getDuration());
+                    Log.e(TAG, "swipe left right: " + position);
+                    seekTo(position);
+                    scrollerCurrentPosition = 0;
+                    pb_scroller.setProgress(0);
+                    startUpdate(FROM_PLAYER);
+
+                }
+                scroller = SCROLLER_NORMAL;
+                hideScroller();
+
+                break;
+        }
+        return true;
+    }
+
+    private void hideScroller() {
+        if (ll_scroller.getTag(R.id.scroller_visibility) == null || (boolean) ll_scroller.getTag(R.id.scroller_visibility)) {
+            ll_scroller.setVisibility(INVISIBLE);
+            ll_scroller.setTag(R.id.scroller_visibility, false);
+            Log.e(TAG, "hideScroller: ");
+        }
+
+    }
+
+    private void showScroller() {
+        if (ll_scroller.getTag(R.id.scroller_visibility) == null || !(boolean) ll_scroller.getTag(R.id.scroller_visibility)) {
+            ll_scroller.setVisibility(VISIBLE);
+            ll_scroller.setTag(R.id.scroller_visibility, true);
+            Log.d(TAG, "showScroller: ");
+        }
 
     }
 

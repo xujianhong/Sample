@@ -468,6 +468,8 @@ public class CustomPlayerView extends FrameLayout
         return mCurrentState;
     }
 
+
+
     @Override
     public boolean isIdle() {
         return mCurrentState == STATE_IDLE;
