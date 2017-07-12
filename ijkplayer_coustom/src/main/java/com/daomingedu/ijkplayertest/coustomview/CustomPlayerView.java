@@ -546,7 +546,7 @@ public class CustomPlayerView extends FrameLayout
     }
 
     @Override
-    public long getDuration() {
+    public int getDuration() {
 
         return mDuration;
 

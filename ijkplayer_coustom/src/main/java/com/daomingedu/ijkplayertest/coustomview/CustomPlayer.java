@@ -52,7 +52,7 @@ public interface CustomPlayer {
 
     void reset();
 
-    long getDuration();
+    int getDuration();
 
     long getCurrentPosition();
     void setCurrentPosition(int currentPosition);
