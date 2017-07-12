@@ -46,6 +46,11 @@ public class CustomPlayerView extends FrameLayout
 
     private boolean isBackground = false;
 
+
+
+    private int mCurrentPosition = STATE_MEDIA_DATA_ERROR;
+
+
     public boolean isLooping() {
         return looping;
     }
@@ -438,7 +443,7 @@ public class CustomPlayerView extends FrameLayout
     @Override
     public void pause() {
         if (mediaPlayer != null) {
-
+            mCurrentPosition = mediaPlayer.getCurrentPosition();
             mediaPlayer.pause();
             if (!mediaPlayer.isPlaying()) {
                 refreshController(PLAYER_STATE_PAUSE);
@@ -487,7 +492,16 @@ public class CustomPlayerView extends FrameLayout
 
     @Override
     public boolean isPlaying() {
-        return mediaPlayer != null && mediaPlayer.isPlaying();
+        if(mediaPlayer!=null){
+            try {
+                return mediaPlayer.isPlaying();
+            }catch (IllegalStateException e){
+                return false;
+            }
+        }
+        else{
+            return false;
+        }
     }
 
     @Override
@@ -540,7 +554,12 @@ public class CustomPlayerView extends FrameLayout
 
     @Override
     public long getCurrentPosition() {
-        return !isPlaying() ? -2 : mediaPlayer.getCurrentPosition();
+        return !isPlaying() ? mCurrentPosition : mediaPlayer.getCurrentPosition();
+    }
+
+    @Override
+    public void setCurrentPosition(int currentPosition) {
+        mCurrentPosition = currentPosition;
     }
 
     @Override

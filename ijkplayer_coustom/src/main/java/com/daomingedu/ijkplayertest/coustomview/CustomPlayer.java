@@ -55,7 +55,7 @@ public interface CustomPlayer {
     long getDuration();
 
     long getCurrentPosition();
-
+    void setCurrentPosition(int currentPosition);
     int getDisplayState();
     void fullScreen();
     void smallScreen();
