@@ -1,8 +1,10 @@
 package com.daomingedu.ijkplayertest.coustomview;
 
 
+import android.content.ContentResolver;
 import android.content.Context;
 
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -41,7 +43,7 @@ public class VideoController extends BaseController
     private static final int FROM_SEEKER_USER = 4;//seekBar拖拽
     private static final int FROM_PLAYER = 3;//player自得的
     private static final int FROM_LEFT_RIGHT_SCROLLER = 5;//左右滑动拖拽
-    private static final int FROM_UP_DOWN_SCROLLER_LEFT = 7;//左上下滑动拖拽
+    private static final int BRIGHTNESS_MEDIT = 7;//左上下滑动拖拽
     private static final int FROM_UP_DOWN_SCROLLER_RIGHT = 8;//右上下滑动拖拽
 
 
@@ -71,7 +73,7 @@ public class VideoController extends BaseController
     Timer mUpdateTimer;
     TimerTask mUpdateTimerTask;
 
-    boolean isfull;//是否全屏
+    boolean isFull;//是否全屏
 
 
     private float downX;
@@ -80,7 +82,8 @@ public class VideoController extends BaseController
     private float differenceY; //滑动Y的差值
     private int scroller = SCROLLER_NORMAL;
     private long scrollerCurrentPosition = 0; //滑动当前的位置
-
+    private float mCurrentBrightness = CustomPlayer.STATE_MEDIA_DATA_ERROR;//当前系统的亮度
+    private boolean isModifyBrightnessMode ;//是否修改系统亮度模式
 
     public VideoController(@NonNull Context context) {
         super(context);
@@ -109,6 +112,7 @@ public class VideoController extends BaseController
         switch (currentState) {
 
             case CustomPlayer.STATE_IDLE:
+
                 cancelUpdate();
                 fl_main.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 ll_loading.setVisibility(INVISIBLE);
@@ -119,9 +123,9 @@ public class VideoController extends BaseController
                 showBtn();
                 ib_screen.setImageResource(R.mipmap.icon_full_screen);
                 break;
-
-            case CustomPlayer.STATE_BUFFING_START:
             case CustomPlayer.STATE_INITIALIZED:
+                setCurrentBrightness();
+            case CustomPlayer.STATE_BUFFING_START:
             case CustomPlayer.STATE_PREPARE:
                 fl_main.setBackgroundColor(getResources().getColor(R.color.colorPlayerBg));
                 ll_loading.setVisibility(VISIBLE);
@@ -153,7 +157,75 @@ public class VideoController extends BaseController
                 ll_error.setVisibility(VISIBLE);
                 ll_error.setClickable(true);
                 break;
+            case CustomPlayer.STATE_END:
+                restoreBrightnessMode();
+                break;
         }
+    }
+
+    /**
+     * 得到当前系统亮度
+     */
+    private void setCurrentBrightness() {
+        if (mCurrentBrightness == CustomPlayer.STATE_MEDIA_DATA_ERROR) {
+            setScreenBrightnessMode();
+            ContentResolver contentResolver = mContext.getContentResolver();
+            try {
+                mCurrentBrightness = Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS);
+
+            } catch (Settings.SettingNotFoundException e) {
+                try {
+                    mCurrentBrightness = Settings.System.getFloat(contentResolver, Settings.System.SCREEN_BRIGHTNESS);
+                } catch (Settings.SettingNotFoundException e1) {
+                    try {
+                        mCurrentBrightness = Settings.System.getLong(contentResolver, Settings.System.SCREEN_BRIGHTNESS);
+                    } catch (Settings.SettingNotFoundException e2) {
+                        e2.printStackTrace();
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    /**
+     * 修改当前系统亮度调节模式 如果是自动改为手动
+     */
+    public void setScreenBrightnessMode() {
+        ContentResolver contentResolver = mContext.getContentResolver();
+        try {
+            int mode = Settings.System.getInt(contentResolver,
+                    Settings.System.SCREEN_BRIGHTNESS_MODE);
+            if (mode == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC) {
+                Settings.System.putInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS_MODE,
+                        Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+                isModifyBrightnessMode = true;
+            }
+        } catch (Settings.SettingNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 恢复之前亮度调节模式
+     */
+    public void restoreBrightnessMode(){
+        ContentResolver contentResolver = mContext.getContentResolver();
+        try {
+            int mode = Settings.System.getInt(contentResolver,
+                    Settings.System.SCREEN_BRIGHTNESS_MODE);
+            if (mode == Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL&&isModifyBrightnessMode) {
+                Settings.System.putInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS_MODE,
+                        Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC);
+                isModifyBrightnessMode = false;
+            }
+        } catch (Settings.SettingNotFoundException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override
@@ -332,10 +404,10 @@ public class VideoController extends BaseController
     private void displayBtn() {
         if (player.getDisplayState() == CustomPlayer.DISPLAY_SMALL) {
             ib_screen.setImageResource(R.mipmap.icon_full_screen);
-            isfull = false;
+            isFull = false;
         } else if (player.getDisplayState() == CustomPlayer.DISPLAY_FULL) {
             ib_screen.setImageResource(R.mipmap.icon_crop_screen);
-            isfull = true;
+            isFull = true;
         }
     }
 
@@ -384,7 +456,7 @@ public class VideoController extends BaseController
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if (!isfull) return false;
+        if (!isFull) return false;
 
         int action = MotionEventCompat.getActionMasked(event);
         switch (action) {
@@ -430,11 +502,17 @@ public class VideoController extends BaseController
                     Log.w(TAG, "onTouch: Swipe left and right " + differenceX);
                 } else if (scroller == SLIDE_LEFT_UP_DOWN) { //左上下滑动
                     hideScrollerProgressBar();
-                    if (!"CLight".equals(iv_scroller.getTag())) {
+                    if (mCurrentBrightness > 170 && !"CLightHigh".equals(iv_scroller.getTag())) {
+                        iv_scroller.setImageResource(R.mipmap.ic_brightness_high);
+                        iv_scroller.setTag("CLightHigh");
+                    } else if (mCurrentBrightness < 170 && mCurrentBrightness > 85 && !"CLightMedic".equals(iv_scroller.getTag())) {
                         iv_scroller.setImageResource(R.mipmap.ic_brightness_medit);
-                        iv_scroller.setTag("CLight");
+                        iv_scroller.setTag("CLightMedic");
+                    } else if (mCurrentBrightness < 85 && !"CLightLow".equals(iv_scroller.getTag())) {
+                        iv_scroller.setImageResource(R.mipmap.ic_brightness_low);
+                        iv_scroller.setTag("CLightLow");
                     }
-                    Log.w(TAG, "onTouch: Slide up and down    LEFT " + differenceY);
+//                    Log.w(TAG, "onTouch: Slide up and down    LEFT " + differenceY);
 
                     setScreenBrightness(differenceY);
 
@@ -485,6 +563,7 @@ public class VideoController extends BaseController
         if (ll_scroller.getTag(R.id.scroller_visibility) == null || (boolean) ll_scroller.getTag(R.id.scroller_visibility)) {
             ll_scroller.setVisibility(INVISIBLE);
             ll_scroller.setTag(R.id.scroller_visibility, false);
+            fl_main.setBackgroundColor(getResources().getColor(android.R.color.transparent));
             Log.e(TAG, "hideScroller: ");
         }
 
@@ -495,6 +574,7 @@ public class VideoController extends BaseController
         if (ll_scroller.getTag(R.id.scroller_visibility) == null || !(boolean) ll_scroller.getTag(R.id.scroller_visibility)) {
             ll_scroller.setVisibility(VISIBLE);
             ll_scroller.setTag(R.id.scroller_visibility, true);
+            fl_main.setBackgroundColor(getResources().getColor(R.color.colorPlayerBg));
             Log.d(TAG, "showScroller: ");
         }
 
@@ -506,13 +586,17 @@ public class VideoController extends BaseController
      * @param screenBrightness
      */
     public void setScreenBrightness(float screenBrightness) {
-        Window window = ((AppCompatActivity)mContext).getWindow();
+        Window window = ((AppCompatActivity) mContext).getWindow();
         WindowManager.LayoutParams lp = window.getAttributes();
+        Log.e(TAG, "setScreenBrightness: "+(screenBrightness * 255.0f / getHeight()) +"\n  mCurrentBrightness "+mCurrentBrightness
+        +"\n  total"+(mCurrentBrightness + (screenBrightness * 255.0f / getHeight())));
+//       mCurrentBrightness + (screenBrightness * 255.0f / getHeight());
+
+        lp.screenBrightness = mCurrentBrightness;
+        tv_scroller.setText((mCurrentBrightness/255.0f*100)+"");
+        window.setAttributes(lp);
         //TODO 调节亮度
     }
 
-    public void currentScreenBrightness(int scrr){
-        //TODO  调节亮度得到当前亮度
 
-    }
 }

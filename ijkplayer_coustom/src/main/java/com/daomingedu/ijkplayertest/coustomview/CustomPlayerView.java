@@ -526,7 +526,7 @@ public class CustomPlayerView extends FrameLayout
     public void release() {
         if (mediaPlayer != null) {
             mediaPlayer.release();
-            mCurrentState = STATE_END;
+            refreshController(STATE_END);
         }
         if (mSurfaceTexture != null) {
             mSurfaceTexture.release();
