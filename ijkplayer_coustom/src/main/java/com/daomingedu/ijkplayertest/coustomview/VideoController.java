@@ -1,8 +1,10 @@
 package com.daomingedu.ijkplayertest.coustomview;
 
 
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
+
 
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -73,7 +75,7 @@ public class VideoController extends BaseController
     Timer mUpdateTimer;
     TimerTask mUpdateTimerTask;
 
-    boolean isFull;//是否全屏
+    boolean isFull = true;//是否全屏
 
 
     private float downX;
@@ -83,7 +85,9 @@ public class VideoController extends BaseController
     private int scroller = SCROLLER_NORMAL;
     private long scrollerCurrentPosition = 0; //滑动当前的位置
     private float mCurrentBrightness = CustomPlayer.STATE_MEDIA_DATA_ERROR;//当前系统的亮度
-    private boolean isModifyBrightnessMode ;//是否修改系统亮度模式
+    private boolean isModifyBrightnessMode;//是否修改系统亮度模式
+
+    private float scrollerBrightness; //滑动时的亮度值
 
     public VideoController(@NonNull Context context) {
         super(context);
@@ -203,6 +207,7 @@ public class VideoController extends BaseController
                 Settings.System.putInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS_MODE,
                         Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
                 isModifyBrightnessMode = true;
+
             }
         } catch (Settings.SettingNotFoundException e) {
             e.printStackTrace();
@@ -212,12 +217,12 @@ public class VideoController extends BaseController
     /**
      * 恢复之前亮度调节模式
      */
-    public void restoreBrightnessMode(){
+    public void restoreBrightnessMode() {
         ContentResolver contentResolver = mContext.getContentResolver();
         try {
             int mode = Settings.System.getInt(contentResolver,
                     Settings.System.SCREEN_BRIGHTNESS_MODE);
-            if (mode == Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL&&isModifyBrightnessMode) {
+            if (mode == Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL && isModifyBrightnessMode) {
                 Settings.System.putInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS_MODE,
                         Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC);
                 isModifyBrightnessMode = false;
@@ -336,6 +341,8 @@ public class VideoController extends BaseController
         mContext = context;
         View.inflate(context, R.layout.layout_controller, this);
 
+
+
         ib_play = (ImageButton) findViewById(R.id.ib_play);
         ib_screen = (ImageButton) findViewById(R.id.ib_screen);
 
@@ -402,12 +409,15 @@ public class VideoController extends BaseController
     }
 
     private void displayBtn() {
+
         if (player.getDisplayState() == CustomPlayer.DISPLAY_SMALL) {
             ib_screen.setImageResource(R.mipmap.icon_full_screen);
-            isFull = false;
+
+//            isFull = false;
         } else if (player.getDisplayState() == CustomPlayer.DISPLAY_FULL) {
             ib_screen.setImageResource(R.mipmap.icon_crop_screen);
             isFull = true;
+
         }
     }
 
@@ -502,13 +512,13 @@ public class VideoController extends BaseController
                     Log.w(TAG, "onTouch: Swipe left and right " + differenceX);
                 } else if (scroller == SLIDE_LEFT_UP_DOWN) { //左上下滑动
                     hideScrollerProgressBar();
-                    if (mCurrentBrightness > 170 && !"CLightHigh".equals(iv_scroller.getTag())) {
+                    if (scrollerBrightness > 170 && !"CLightHigh".equals(iv_scroller.getTag())) {
                         iv_scroller.setImageResource(R.mipmap.ic_brightness_high);
                         iv_scroller.setTag("CLightHigh");
-                    } else if (mCurrentBrightness < 170 && mCurrentBrightness > 85 && !"CLightMedic".equals(iv_scroller.getTag())) {
+                    } else if (scrollerBrightness < 170 && scrollerBrightness > 85 && !"CLightMedic".equals(iv_scroller.getTag())) {
                         iv_scroller.setImageResource(R.mipmap.ic_brightness_medit);
                         iv_scroller.setTag("CLightMedic");
-                    } else if (mCurrentBrightness < 85 && !"CLightLow".equals(iv_scroller.getTag())) {
+                    } else if (scrollerBrightness < 85 && !"CLightLow".equals(iv_scroller.getTag())) {
                         iv_scroller.setImageResource(R.mipmap.ic_brightness_low);
                         iv_scroller.setTag("CLightLow");
                     }
@@ -535,6 +545,9 @@ public class VideoController extends BaseController
                     scrollerCurrentPosition = 0;
                     pb_scroller.setProgress(0);
                     startUpdate(FROM_PLAYER);
+                }
+                else if(scroller == SLIDE_LEFT_UP_DOWN){//亮度滑动
+                    mCurrentBrightness = scrollerBrightness;
                 }
 
                 scroller = SCROLLER_NORMAL;
@@ -588,15 +601,28 @@ public class VideoController extends BaseController
     public void setScreenBrightness(float screenBrightness) {
         Window window = ((AppCompatActivity) mContext).getWindow();
         WindowManager.LayoutParams lp = window.getAttributes();
-        Log.e(TAG, "setScreenBrightness: "+(screenBrightness * 255.0f / getHeight()) +"\n  mCurrentBrightness "+mCurrentBrightness
-        +"\n  total"+(mCurrentBrightness + (screenBrightness * 255.0f / getHeight())));
-//       mCurrentBrightness + (screenBrightness * 255.0f / getHeight());
+        float differenceBrightness = (screenBrightness * 255.0f / getHeight()) * -1f;
+//
+        scrollerBrightness = mCurrentBrightness + differenceBrightness;
+//
+        if (scrollerBrightness < 0) {
+            scrollerBrightness = 0.0f;
+        } else if (scrollerBrightness > 255.0f) {
+            scrollerBrightness = 255.0f;
+        }
 
-        lp.screenBrightness = mCurrentBrightness;
-        tv_scroller.setText((mCurrentBrightness/255.0f*100)+"");
+        Log.e(TAG,
+                "宽度" + getWidth() +
+                        "\n高度：" + getHeight() +
+                        "\n差值: " + differenceBrightness +
+                        "\n  亮度值 " + scrollerBrightness
+                        + "\n  滑动值：" + screenBrightness);
+
+
+        lp.screenBrightness = scrollerBrightness / 255f;
+        tv_scroller.setText((int) (scrollerBrightness / 255.0f * 100)+"%");
         window.setAttributes(lp);
-        //TODO 调节亮度
-    }
 
+    }
 
 }
