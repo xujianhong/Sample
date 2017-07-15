@@ -1,11 +1,11 @@
 package com.daomingedu.ijkplayertest.coustomview;
 
 
-import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 
 
+import android.media.AudioManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.view.MotionEventCompat;
@@ -86,12 +86,18 @@ public class VideoController extends BaseController
     private long scrollerCurrentPosition = 0; //滑动当前的位置
     private float mCurrentBrightness = CustomPlayer.STATE_MEDIA_DATA_ERROR;//当前系统的亮度
     private boolean isModifyBrightnessMode;//是否修改系统亮度模式
-
     private float scrollerBrightness; //滑动时的亮度值
+
+    private AudioManager audioManager;//音频管理器
+    private float mCurrentVolume = CustomPlayer.STATE_MEDIA_DATA_ERROR;//当前系统音频的音量
+    private float scrollerVolume;//滑动时的音量值
+    private float mMaxVolume;
+
 
     public VideoController(@NonNull Context context) {
         super(context);
         init(context);
+
     }
 
     @Override
@@ -129,6 +135,7 @@ public class VideoController extends BaseController
                 break;
             case CustomPlayer.STATE_INITIALIZED:
                 setCurrentBrightness();
+                setCurrentVolume();
             case CustomPlayer.STATE_BUFFING_START:
             case CustomPlayer.STATE_PREPARE:
                 fl_main.setBackgroundColor(getResources().getColor(R.color.colorPlayerBg));
@@ -168,6 +175,21 @@ public class VideoController extends BaseController
     }
 
     /**
+     * 得到当前系统音量
+     */
+    private void setCurrentVolume() {
+        if (audioManager == null) {
+            audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        }
+        mCurrentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+
+        mMaxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        Log.d(TAG, "setCurrentVolume() called " + mMaxVolume + "  mCurrentVolume " + mCurrentVolume);
+
+        scrollerVolume = mCurrentVolume;
+    }
+
+    /**
      * 得到当前系统亮度
      */
     private void setCurrentBrightness() {
@@ -190,8 +212,9 @@ public class VideoController extends BaseController
                 }
 
             }
-
+            scrollerBrightness = mCurrentBrightness;
         }
+
 
     }
 
@@ -340,7 +363,6 @@ public class VideoController extends BaseController
     private void init(Context context) {
         mContext = context;
         View.inflate(context, R.layout.layout_controller, this);
-
 
 
         ib_play = (ImageButton) findViewById(R.id.ib_play);
@@ -515,10 +537,10 @@ public class VideoController extends BaseController
                     if (scrollerBrightness > 170 && !"CLightHigh".equals(iv_scroller.getTag())) {
                         iv_scroller.setImageResource(R.mipmap.ic_brightness_high);
                         iv_scroller.setTag("CLightHigh");
-                    } else if (scrollerBrightness < 170 && scrollerBrightness > 85 && !"CLightMedic".equals(iv_scroller.getTag())) {
+                    } else if (scrollerBrightness <= 170 && scrollerBrightness > 85 && !"CLightMedic".equals(iv_scroller.getTag())) {
                         iv_scroller.setImageResource(R.mipmap.ic_brightness_medit);
                         iv_scroller.setTag("CLightMedic");
-                    } else if (scrollerBrightness < 85 && !"CLightLow".equals(iv_scroller.getTag())) {
+                    } else if (scrollerBrightness <= 85 && !"CLightLow".equals(iv_scroller.getTag())) {
                         iv_scroller.setImageResource(R.mipmap.ic_brightness_low);
                         iv_scroller.setTag("CLightLow");
                     }
@@ -528,11 +550,24 @@ public class VideoController extends BaseController
 
                 } else if (scroller == SLIDE_RIGHT_UP_DOWN) { //右上下滑动
                     hideScrollerProgressBar();
-                    if (!"CVolume".equals(iv_scroller.getTag())) {
+                    if (scrollerVolume > mMaxVolume * 2 / 3 && !"CVolumeMax".equals(iv_scroller.getTag())) {
+                        iv_scroller.setImageResource(R.mipmap.ic_volume_up);
+                        iv_scroller.setTag("CVolumeMax");
+                    } else if (scrollerVolume <= mMaxVolume * 2 / 3 && scrollerVolume > mMaxVolume / 3
+                            && !"CVolumeMedic".equals(iv_scroller.getTag())) {
+                        iv_scroller.setImageResource(R.mipmap.ic_volume_down);
+                        iv_scroller.setTag("CVolumeMedic");
+                    } else if (scrollerVolume <= mMaxVolume / 3 && scrollerVolume > 0
+                            && !"CVolumeLow".equals(iv_scroller.getTag())) {
                         iv_scroller.setImageResource(R.mipmap.ic_volume_mute);
-                        iv_scroller.setTag("CVolume");
+                        iv_scroller.setTag("CVolumeLow");
+                    } else if (scrollerVolume <= 0
+                            && !"CVolumeOff".equals(iv_scroller.getTag())) {
+                        iv_scroller.setImageResource(R.mipmap.ic_volume_off);
+                        iv_scroller.setTag("CVolumeOff");
                     }
                     Log.w(TAG, "onTouch: Slide up and down    RIGHT " + differenceY);
+                    setVolume(differenceY);
 
                 }
 
@@ -545,9 +580,11 @@ public class VideoController extends BaseController
                     scrollerCurrentPosition = 0;
                     pb_scroller.setProgress(0);
                     startUpdate(FROM_PLAYER);
-                }
-                else if(scroller == SLIDE_LEFT_UP_DOWN){//亮度滑动
+                } else if (scroller == SLIDE_LEFT_UP_DOWN) {//亮度滑动
                     mCurrentBrightness = scrollerBrightness;
+                }
+                else if(scroller ==SLIDE_RIGHT_UP_DOWN){//音量滑动
+                    mCurrentVolume = scrollerVolume;
                 }
 
                 scroller = SCROLLER_NORMAL;
@@ -582,7 +619,6 @@ public class VideoController extends BaseController
 
     }
 
-
     private void showScroller() {
         if (ll_scroller.getTag(R.id.scroller_visibility) == null || !(boolean) ll_scroller.getTag(R.id.scroller_visibility)) {
             ll_scroller.setVisibility(VISIBLE);
@@ -592,6 +628,7 @@ public class VideoController extends BaseController
         }
 
     }
+
 
     /**
      * 设置当前窗口屏幕亮度
@@ -610,19 +647,44 @@ public class VideoController extends BaseController
         } else if (scrollerBrightness > 255.0f) {
             scrollerBrightness = 255.0f;
         }
-
-        Log.e(TAG,
-                "宽度" + getWidth() +
-                        "\n高度：" + getHeight() +
-                        "\n差值: " + differenceBrightness +
-                        "\n  亮度值 " + scrollerBrightness
-                        + "\n  滑动值：" + screenBrightness);
-
+//        Log.e(TAG,
+//                "宽度" + getWidth() +
+//                        "\n高度：" + getHeight() +
+//                        "\n差值: " + differenceBrightness +
+//                        "\n  亮度值 " + scrollerBrightness
+//                        + "\n  滑动值：" + screenBrightness);
 
         lp.screenBrightness = scrollerBrightness / 255f;
-        tv_scroller.setText((int) (scrollerBrightness / 255.0f * 100)+"%");
+        tv_scroller.setText((int) (scrollerBrightness / 255.0f * 100) + "%");
         window.setAttributes(lp);
 
+    }
+
+    /**
+     * 设置当前的音量
+     *
+     * @param differenceY
+     */
+    private void setVolume(float differenceY) {
+        float differenceVulome = (differenceY * mMaxVolume / getHeight()) * -1;
+        scrollerVolume = mCurrentVolume + differenceVulome;
+
+        if (scrollerVolume < 0) {
+            scrollerVolume = 0;
+        } else if (scrollerVolume > mMaxVolume) {
+            scrollerVolume = mMaxVolume;
+        }
+        Log.e(TAG, "调节音量 ：" + scrollerVolume +
+                "\n 差值：" + differenceY);
+        if(audioManager==null){
+            setCurrentVolume();
+        }
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
+                    (int) scrollerVolume,
+                    AudioManager.FLAG_PLAY_SOUND);
+        tv_scroller.setText((int) (scrollerVolume/mMaxVolume*100)+"%");
+
+        //TODO 调节音量
     }
 
 }

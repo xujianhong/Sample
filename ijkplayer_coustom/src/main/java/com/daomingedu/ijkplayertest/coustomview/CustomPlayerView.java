@@ -236,14 +236,14 @@ public class CustomPlayerView extends FrameLayout
         public boolean onError(MediaPlayer mediaPlayer, int what, int extra) {
             refreshController(STATE_ERROR);
             switch (what) {
-                /**
-                 * 未指定的媒体播放器错误。
+                /*
+                  未指定的媒体播放器错误。
                  */
                 case MediaPlayer.MEDIA_ERROR_UNKNOWN:
                     Log.e(TAG, "onError-what: MEDIA_ERROR_UNKNOWN");
                     break;
-                /**
-                 * 媒体服务器死机。 在这种情况下，应用程序必须释放MediaPlayer对象并实例化一个新对象。
+                /*
+                  媒体服务器死机。 在这种情况下，应用程序必须释放MediaPlayer对象并实例化一个新对象。
                  */
                 case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
                     Log.e(TAG, "onError-what: MEDIA_ERROR_SERVER_DIED");
@@ -251,19 +251,19 @@ public class CustomPlayerView extends FrameLayout
             }
 
             switch (extra) {
-                /**文件或网络相关的操作错误。*/
+                /*文件或网络相关的操作错误。*/
                 case MediaPlayer.MEDIA_ERROR_IO:
                     Log.e(TAG, "onError-extra: MEDIA_ERROR_IO");
                     break;
-                /**位流不符合相关编码标准或文件规格。*/
+                /*位流不符合相关编码标准或文件规格。*/
                 case MediaPlayer.MEDIA_ERROR_MALFORMED:
                     Log.e(TAG, "onError-extra: MEDIA_ERROR_MALFORMED");
                     break;
-                /**位流符合相关编码标准或文件规格，但媒体框架不支持该功能。*/
+                /*位流符合相关编码标准或文件规格，但媒体框架不支持该功能。*/
                 case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
                     Log.e(TAG, "onError-extra: MEDIA_ERROR_UNSUPPORTED");
                     break;
-                /**一些操作需要太长时间才能完成，通常超过3-5秒。*/
+                /*一些操作需要太长时间才能完成，通常超过3-5秒。*/
                 case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
                     Log.e(TAG, "onError-extra: MEDIA_ERROR_TIMED_OUT");
                     break;
@@ -278,28 +278,28 @@ public class CustomPlayerView extends FrameLayout
         @Override
         public boolean onInfo(MediaPlayer mediaPlayer, int what, int i1) {
             switch (what) {
-                /**
-                 * 未指定的媒体播放器信息
+                /*
+                  未指定的媒体播放器信息
                  */
                 case MediaPlayer.MEDIA_INFO_UNKNOWN:
                     Log.d(TAG, "onInfo: MEDIA_INFO_UNKNOWN");
                     break;
-                /**
-                 * 视频对于解码器来说太复杂了：它不能足够快地解码帧。 在这个阶段可能只有音频播放正常。
+                /*
+                  视频对于解码器来说太复杂了：它不能足够快地解码帧。 在这个阶段可能只有音频播放正常。
                  */
                 case MediaPlayer.MEDIA_INFO_VIDEO_TRACK_LAGGING:
                     Log.d(TAG, "onInfo: MEDIA_INFO_VIDEO_TRACK_LAGGING");
                     break;
 
-                /**
-                 * 播放器刚推出第一个视频帧进行渲染。
+                /*
+                  播放器刚推出第一个视频帧进行渲染。
                  */
                 case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
                     Log.d(TAG, "onInfo: MEDIA_INFO_VIDEO_RENDERING_START");
 
                     break;
-                /**
-                 * MediaPlayer暂时暂停内部播放，以缓冲更多的数据。
+                /*
+                  MediaPlayer暂时暂停内部播放，以缓冲更多的数据。
                  */
                 case MediaPlayer.MEDIA_INFO_BUFFERING_START:
                     Log.d(TAG, "onInfo: MEDIA_INFO_BUFFERING_START");
@@ -308,8 +308,8 @@ public class CustomPlayerView extends FrameLayout
                     refreshController(STATE_BUFFING_START);
 
                     break;
-                /**
-                 * 填充缓冲区后MediaPlayer正在恢复播放。
+                /*
+                  填充缓冲区后MediaPlayer正在恢复播放。
                  */
                 case MediaPlayer.MEDIA_INFO_BUFFERING_END:
                     Log.d(TAG, "onInfo: MEDIA_INFO_BUFFERING_END");
