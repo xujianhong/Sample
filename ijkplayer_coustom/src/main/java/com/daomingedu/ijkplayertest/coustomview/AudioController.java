@@ -135,12 +135,15 @@ public class AudioController extends BaseController
                 setCurrentVolume();
             case CustomPlayer.STATE_BUFFING_START:
             case CustomPlayer.STATE_PREPARE:
+
                 fl_main.setBackgroundColor(getResources().getColor(R.color.colorPlayerBg));
                 ll_loading.setVisibility(VISIBLE);
+                ib_play.setEnabled(false);
                 break;
 
             case CustomPlayer.STATE_PREPARE_END:
                 startUpdate(FROM_PLAYER);
+                ib_play.setEnabled(true);
             case CustomPlayer.STATE_BUFFING_END:
                 fl_main.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 ll_loading.setVisibility(INVISIBLE);
@@ -579,8 +582,7 @@ public class AudioController extends BaseController
                     startUpdate(FROM_PLAYER);
                 } else if (scroller == SLIDE_LEFT_UP_DOWN) {//亮度滑动
                     mCurrentBrightness = scrollerBrightness;
-                }
-                else if(scroller ==SLIDE_RIGHT_UP_DOWN){//音量滑动
+                } else if (scroller == SLIDE_RIGHT_UP_DOWN) {//音量滑动
                     mCurrentVolume = scrollerVolume;
                 }
 
@@ -673,13 +675,13 @@ public class AudioController extends BaseController
         }
         Log.e(TAG, "调节音量 ：" + scrollerVolume +
                 "\n 差值：" + differenceY);
-        if(audioManager==null){
+        if (audioManager == null) {
             setCurrentVolume();
         }
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
-                    (int) scrollerVolume,
-                    AudioManager.FLAG_PLAY_SOUND);
-        tv_scroller.setText((int) (scrollerVolume/mMaxVolume*100)+"%");
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
+                (int) scrollerVolume,
+                AudioManager.FLAG_PLAY_SOUND);
+        tv_scroller.setText((int) (scrollerVolume / mMaxVolume * 100) + "%");
 
         //TODO 调节音量
     }

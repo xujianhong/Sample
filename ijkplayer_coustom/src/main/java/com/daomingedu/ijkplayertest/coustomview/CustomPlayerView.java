@@ -24,6 +24,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+
+import com.daomingedu.ijkplayertest.R;
 
 import java.io.IOException;
 import java.util.Map;
@@ -49,6 +52,7 @@ public class CustomPlayerView extends FrameLayout
 
     private int mCurrentPosition = STATE_MEDIA_DATA_ERROR;
     private boolean isRecord;
+    private ImageView imageView;
 
 
     public boolean isLooping() {
@@ -99,21 +103,18 @@ public class CustomPlayerView extends FrameLayout
     }
 
     private void initController(boolean isRecord) {
-        if(isRecord){
+        if (isRecord) {
             if (controller == null) {
                 controller = new AudioController(mContext);
-            }
-            else{
+            } else {
                 mContainer.removeView(controller);
                 controller = new AudioController(mContext);
             }
 
-        }
-        else{
+        } else {
             if (controller == null) {
                 controller = new VideoController(mContext);
-            }
-            else{
+            } else {
                 mContainer.removeView(controller);
                 controller = new VideoController(mContext);
             }
@@ -131,7 +132,7 @@ public class CustomPlayerView extends FrameLayout
 
     private void initView() {
         mContainer = new FrameLayout(mContext);
-        mContainer.setBackgroundColor(Color.BLACK);
+        mContainer.setBackgroundColor(Color.WHITE);
         FrameLayout.LayoutParams ps =
                 new LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
@@ -158,13 +159,38 @@ public class CustomPlayerView extends FrameLayout
         mediaPlayer.setOnErrorListener(mOnErrorListener);
         mediaPlayer.setOnInfoListener(mOnInfoListener);
         mediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
+
+
+        initImageView(isRecord);//添加播放音频时显示图片
+
         initController(isRecord);
+
 
         refreshController(STATE_INITIALIZED);
         initTextureView();
 
 
+    }
 
+    private void initImageView(boolean isRecord) {
+        if (isRecord) {
+            if (imageView == null)
+                imageView = new ImageView(mContext);
+            imageView.setImageResource(R.mipmap.ic_launcher);
+            imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+            LayoutParams ps =
+                    new LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                    );
+
+            mContainer.removeView(imageView);
+            mContainer.addView(imageView,ps);
+        }
+        else{
+            if(imageView!=null)
+            mContainer.removeView(imageView);
+        }
     }
 
     /**
