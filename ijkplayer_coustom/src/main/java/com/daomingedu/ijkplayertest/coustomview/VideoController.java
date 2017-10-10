@@ -140,11 +140,14 @@ public class VideoController extends BaseController
             case CustomPlayer.STATE_PREPARE:
                 fl_main.setBackgroundColor(getResources().getColor(R.color.colorPlayerBg));
                 ll_loading.setVisibility(VISIBLE);
+                ib_play.setEnabled(false);
                 break;
 
             case CustomPlayer.STATE_PREPARE_END:
                 startUpdate(FROM_PLAYER);
+                ib_play.setEnabled(true);
             case CustomPlayer.STATE_BUFFING_END:
+
                 fl_main.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 ll_loading.setVisibility(INVISIBLE);
                 showBtn();
@@ -259,7 +262,7 @@ public class VideoController extends BaseController
     @Override
     public void setBufferingUpdate(int bufferingUpdate) {
         if (player.isPreparing() || player.isBuffing()) {
-            tv_buffing_Prepare.setText("已缓冲" + bufferingUpdate + "%");
+//            tv_buffing_Prepare.setText("已缓冲" + bufferingUpdate + "%");
         }
         seek.setSecondaryProgress(bufferingUpdate);
     }
