@@ -133,12 +133,12 @@ public class AudioController extends BaseController
             case CustomPlayer.STATE_INITIALIZED:
                 setCurrentBrightness();
                 setCurrentVolume();
-            case CustomPlayer.STATE_BUFFING_START:
-            case CustomPlayer.STATE_PREPARE:
 
+            case CustomPlayer.STATE_PREPARE:
+                ib_play.setEnabled(false);
+            case CustomPlayer.STATE_BUFFING_START:
                 fl_main.setBackgroundColor(getResources().getColor(R.color.colorPlayerBg));
                 ll_loading.setVisibility(VISIBLE);
-                ib_play.setEnabled(false);
                 break;
 
             case CustomPlayer.STATE_PREPARE_END:
@@ -151,9 +151,11 @@ public class AudioController extends BaseController
                 break;
             case CustomPlayer.PLAYER_STATE_PAUSE:
                 cancelUpdate();
+                showBtn();
                 break;
             case CustomPlayer.PLAYER_STATE_PLAYING:
                 startUpdate(FROM_PLAYER);
+                showBtn();
                 break;
 
             case CustomPlayer.STATE_COMPLETED:
@@ -410,7 +412,7 @@ public class AudioController extends BaseController
                 } else {
                     player.resume();
                 }
-                showBtn();
+//                showBtn();
                 break;
 //            case R.id.ib_screen:
 //                Log.d(TAG, "onClick: ib_screen");

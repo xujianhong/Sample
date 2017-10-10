@@ -132,7 +132,7 @@ public class CustomPlayerView extends FrameLayout
 
     private void initView() {
         mContainer = new FrameLayout(mContext);
-        mContainer.setBackgroundColor(Color.WHITE);
+        mContainer.setBackgroundColor(Color.BLACK);
         FrameLayout.LayoutParams ps =
                 new LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,

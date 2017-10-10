@@ -136,11 +136,12 @@ public class VideoController extends BaseController
             case CustomPlayer.STATE_INITIALIZED:
                 setCurrentBrightness();
                 setCurrentVolume();
-            case CustomPlayer.STATE_BUFFING_START:
+
             case CustomPlayer.STATE_PREPARE:
+                ib_play.setEnabled(false);
+            case CustomPlayer.STATE_BUFFING_START:
                 fl_main.setBackgroundColor(getResources().getColor(R.color.colorPlayerBg));
                 ll_loading.setVisibility(VISIBLE);
-                ib_play.setEnabled(false);
                 break;
 
             case CustomPlayer.STATE_PREPARE_END:
@@ -153,9 +154,11 @@ public class VideoController extends BaseController
                 showBtn();
                 break;
             case CustomPlayer.PLAYER_STATE_PAUSE:
+                showBtn();
                 cancelUpdate();
                 break;
             case CustomPlayer.PLAYER_STATE_PLAYING:
+                showBtn();
                 startUpdate(FROM_PLAYER);
                 break;
 
@@ -413,7 +416,7 @@ public class VideoController extends BaseController
                 } else {
                     player.resume();
                 }
-                showBtn();
+//                showBtn();
                 break;
             case R.id.ib_screen:
                 Log.d(TAG, "onClick: ib_screen");

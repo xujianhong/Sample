@@ -51,6 +51,13 @@ public class MainActivity extends AppCompatActivity {
                 .start();
     }
 
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        cp_view.pause();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
