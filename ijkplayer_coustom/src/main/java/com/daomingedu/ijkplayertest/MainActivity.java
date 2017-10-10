@@ -17,7 +17,10 @@ import com.daomingedu.ijkplayertest.coustomview.CustomPlayerView;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_WRITE_SETTINGS = 200;
-    String urlData1 = "http://vfx.mtime.cn/Video/2017/03/31/mp4/170331093811717750.mp4";
+//    String urlData1 = "http://vfx.mtime.cn/Video/2017/03/31/mp4/170331093811717750.mp4";
+
+    String urlData1 = "http://test1-manage.gz.bcebos.com/vocal/170720154217915.mp3";
+
     //    String urlData = "/storage/emulated/0/Movies/video_20170512_163255.mp4";
     String urlData = "http://vfx.mtime.cn/Video/2017/05/25/mp4/170525100752401900.mp4";
     CustomPlayerView cp_view;
@@ -33,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
     public void onInit(View view) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {//6.0以上要动态获取所以加一个判断
             if (Settings.System.canWrite(this)) {
-                cp_view.setUrlData(urlData, null)
+                cp_view.setUrlData(urlData, null,false)
                         .start();
             } else {
                 Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
@@ -44,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onPath(View view) {
-        cp_view.setUrlData(urlData1, null)
+        cp_view.setUrlData(urlData1, null,true)
                 .start();
     }
 
@@ -59,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         if(requestCode == REQUEST_WRITE_SETTINGS){
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if(Settings.System.canWrite(this)) {
-                    cp_view.setUrlData(urlData, null)
+                    cp_view.setUrlData(urlData, null,false)
                             .start();
                 }
             }

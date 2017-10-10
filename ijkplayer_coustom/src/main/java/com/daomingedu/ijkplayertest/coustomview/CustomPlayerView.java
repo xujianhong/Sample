@@ -47,8 +47,8 @@ public class CustomPlayerView extends FrameLayout
     private boolean isBackground = false;
 
 
-
     private int mCurrentPosition = STATE_MEDIA_DATA_ERROR;
+    private boolean isRecord;
 
 
     public boolean isLooping() {
@@ -95,17 +95,33 @@ public class CustomPlayerView extends FrameLayout
 
         initView();
 
-        initController();
 
     }
 
-    private void initController() {
-        if (controller == null) {
-            controller = new VideoController(mContext);
+    private void initController(boolean isRecord) {
+        if(isRecord){
+            if (controller == null) {
+                controller = new AudioController(mContext);
+            }
+            else{
+                mContainer.removeView(controller);
+                controller = new AudioController(mContext);
+            }
 
         }
+        else{
+            if (controller == null) {
+                controller = new VideoController(mContext);
+            }
+            else{
+                mContainer.removeView(controller);
+                controller = new VideoController(mContext);
+            }
+        }
+
+
         controller.setPlayer(this);
-        mContainer.removeView(controller);
+
 
         LayoutParams ps =
                 new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -142,10 +158,12 @@ public class CustomPlayerView extends FrameLayout
         mediaPlayer.setOnErrorListener(mOnErrorListener);
         mediaPlayer.setOnInfoListener(mOnInfoListener);
         mediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
-
+        initController(isRecord);
 
         refreshController(STATE_INITIALIZED);
         initTextureView();
+
+
 
     }
 
@@ -182,9 +200,10 @@ public class CustomPlayerView extends FrameLayout
 
     }
 
-    public CustomPlayer setUrlData(String urlData, Map<String, String> headers) {
+    public CustomPlayer setUrlData(String urlData, Map<String, String> headers, boolean isRecord) {
         mHeaders = headers;
         mUrlData = urlData;
+        this.isRecord = isRecord;
 
         return this;
     }
@@ -467,12 +486,10 @@ public class CustomPlayerView extends FrameLayout
     }
 
 
-
     @Override
     public int getCurrentState() {
         return mCurrentState;
     }
-
 
 
     @Override
@@ -492,14 +509,13 @@ public class CustomPlayerView extends FrameLayout
 
     @Override
     public boolean isPlaying() {
-        if(mediaPlayer!=null){
+        if (mediaPlayer != null) {
             try {
                 return mediaPlayer.isPlaying();
-            }catch (IllegalStateException e){
+            } catch (IllegalStateException e) {
                 return false;
             }
-        }
-        else{
+        } else {
             return false;
         }
     }
