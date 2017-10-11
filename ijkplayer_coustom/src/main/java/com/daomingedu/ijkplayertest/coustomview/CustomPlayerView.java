@@ -53,7 +53,7 @@ public class CustomPlayerView extends FrameLayout
     private int mCurrentPosition = STATE_MEDIA_DATA_ERROR;
     private boolean isRecord;
     private ImageView imageView;
-
+    private boolean isInitNoStart;
 
     public boolean isLooping() {
         return looping;
@@ -185,11 +185,10 @@ public class CustomPlayerView extends FrameLayout
                     );
 
             mContainer.removeView(imageView);
-            mContainer.addView(imageView,ps);
-        }
-        else{
-            if(imageView!=null)
-            mContainer.removeView(imageView);
+            mContainer.addView(imageView, ps);
+        } else {
+            if (imageView != null)
+                mContainer.removeView(imageView);
         }
     }
 
@@ -242,12 +241,20 @@ public class CustomPlayerView extends FrameLayout
 
             mDuration = mp.getDuration(); //得到数据的总时长
 
-            mp.start();
-
             mp.setVolume(1f, 1f);//设置音量
 
 
             refreshController(STATE_PREPARE_END);
+
+
+            if (!isInitNoStart) {
+                mp.start();
+                if (mediaPlayer.isPlaying()) {
+                    refreshController(PLAYER_STATE_PLAYING);
+                } else {
+                    refreshController(STATE_CURRENT_NULL);
+                }
+            }
         }
     };
 
@@ -466,6 +473,7 @@ public class CustomPlayerView extends FrameLayout
 
         }
 
+        isInitNoStart = false;
         if (PlayerUtils.getConnectedType(mContext) != ConnectivityManager.TYPE_WIFI
                 && mUrlData.contains("http://")) {
             AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
@@ -482,33 +490,59 @@ public class CustomPlayerView extends FrameLayout
         } else {
             initPlayer();
         }
+    }
 
+    public void init() {
+        if (TextUtils.isEmpty(mUrlData)) {
+            throw new IllegalArgumentException("The Video Path can not be empty");
+
+        }
+        isInitNoStart = true;
+        if (PlayerUtils.getConnectedType(mContext) != ConnectivityManager.TYPE_WIFI
+                && mUrlData.contains("http://")) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+            builder.setMessage("当前网络不在WiFi状态下,是否继续播放?");
+            builder.setNegativeButton("不了", null);
+            builder.setPositiveButton("继续", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    initPlayer();
+                }
+            });
+
+            builder.show();
+        } else {
+
+            initPlayer();
+        }
     }
 
     @Override
     public void pause() {
-        if (mediaPlayer != null) {
+        if (mediaPlayer == null) return;
+        if (mediaPlayer.isPlaying()) {
             mCurrentPosition = mediaPlayer.getCurrentPosition();
             mediaPlayer.pause();
-            if (!mediaPlayer.isPlaying()) {
+            if (!mediaPlayer.isPlaying())
                 refreshController(PLAYER_STATE_PAUSE);
-            } else {
+            else
                 refreshController(STATE_CURRENT_NULL);
-            }
+        } else {
+            refreshController(STATE_CURRENT_NULL);
         }
+
     }
 
     @Override
     public void resume() {
-        if (mediaPlayer != null) {
-
-            mediaPlayer.start();
-            if (mediaPlayer.isPlaying()) {
-                refreshController(PLAYER_STATE_PLAYING);
-            } else {
-                refreshController(STATE_CURRENT_NULL);
-            }
+        if (mediaPlayer == null) return;
+        mediaPlayer.start();
+        if (mediaPlayer.isPlaying()) {
+            refreshController(PLAYER_STATE_PLAYING);
+        } else {
+            refreshController(STATE_CURRENT_NULL);
         }
+
     }
 
 

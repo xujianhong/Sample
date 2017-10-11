@@ -145,7 +145,7 @@ public class VideoController extends BaseController
                 break;
 
             case CustomPlayer.STATE_PREPARE_END:
-                startUpdate(FROM_PLAYER);
+                setPrepareTime();
                 ib_play.setEnabled(true);
             case CustomPlayer.STATE_BUFFING_END:
 
@@ -179,6 +179,16 @@ public class VideoController extends BaseController
                 break;
         }
     }
+
+    /**
+     * 设置准备后显示的总时间和当前时间
+     */
+    private void setPrepareTime() {
+
+        tv_position_time.setText(PlayerUtils.formatTime(0));
+        tv_end_time.setText(PlayerUtils.formatTime(player.getDuration()));
+    }
+
 
     /**
      * 得到当前系统音量
@@ -441,7 +451,7 @@ public class VideoController extends BaseController
         if (player.getDisplayState() == CustomPlayer.DISPLAY_SMALL) {
             ib_screen.setImageResource(R.mipmap.icon_full_screen);
 
-//            isFull = false;
+            isFull = false;
         } else if (player.getDisplayState() == CustomPlayer.DISPLAY_FULL) {
             ib_screen.setImageResource(R.mipmap.icon_crop_screen);
             isFull = true;

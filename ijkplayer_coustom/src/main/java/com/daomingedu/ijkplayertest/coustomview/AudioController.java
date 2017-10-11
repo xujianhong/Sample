@@ -72,7 +72,7 @@ public class AudioController extends BaseController
     Timer mUpdateTimer;
     TimerTask mUpdateTimerTask;
 
-    boolean isFull = true;//是否全屏
+    boolean isFull = false;//是否全屏
 
 
     private float downX;
@@ -142,7 +142,7 @@ public class AudioController extends BaseController
                 break;
 
             case CustomPlayer.STATE_PREPARE_END:
-                startUpdate(FROM_PLAYER);
+                setPrepareTime();
                 ib_play.setEnabled(true);
             case CustomPlayer.STATE_BUFFING_END:
                 fl_main.setBackgroundColor(getResources().getColor(android.R.color.transparent));
@@ -174,6 +174,14 @@ public class AudioController extends BaseController
                 restoreBrightnessMode();
                 break;
         }
+    }
+
+    /**
+     * 设置准备后显示的总时间和当前时间
+     */
+    private void setPrepareTime() {
+        tv_position_time.setText(PlayerUtils.formatTime(0));
+        tv_end_time.setText(PlayerUtils.formatTime(player.getDuration()));
     }
 
     /**
